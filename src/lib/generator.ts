@@ -20,12 +20,15 @@ interface ParsedPrompt {
 function detectGameType(prompt: string): GameType {
   const p = prompt.toLowerCase();
   if (/pong|paddle|ping.?pong|tennis/.test(p)) return "pong";
+  if (/tetris|tetromino|falling.?block|stack/.test(p)) return "tetris";
+  if (/memory|match.?pair|card.?game|concentration/.test(p)) return "memory";
+  if (/flappy|bird|fly.?through|pipe/.test(p)) return "flappy";
+  if (/shoot|shooter|space|asteroid|invader|laser|galaxy/.test(p)) return "shooter";
   if (/snake|serpent|worm|connect.*color|color.*match/.test(p)) return "snake";
-  if (/break|brick|breakout|smash|block/.test(p)) return "breakout";
-  if (/run|runner|jump|gravity|dodge|endless|flappy/.test(p)) return "runner";
+  if (/break|brick|breakout|smash/.test(p)) return "breakout";
   if (/click|tycoon|cafe|idle|tap|coin|upgrade/.test(p)) return "clicker";
-  if (/shoot|shooter|space|asteroid/.test(p)) return "breakout";
-  if (/puzzle|match|connect/.test(p)) return "snake";
+  if (/run|runner|jump|gravity|dodge|endless/.test(p)) return "runner";
+  if (/puzzle|match|connect|block/.test(p)) return "snake";
   return "runner";
 }
 
@@ -47,6 +50,10 @@ function extractTitle(prompt: string, type: GameType): string {
     breakout: "Brick Breaker",
     runner: "Gravity Runner",
     clicker: "Tap Tycoon",
+    flappy: "Flappy Flyer",
+    shooter: "Space Shooter",
+    tetris: "Block Stacker",
+    memory: "Memory Match",
   };
   return typeNames[type];
 }
@@ -85,6 +92,24 @@ function buildSettings(prompt: string, type: GameType): Record<string, unknown> 
       settings.autoClick = /auto|idle|passive/.test(p);
       settings.theme = /cat|cafe|cozy/.test(p) ? "cafe" : /space|rocket/.test(p) ? "space" : "default";
       break;
+    case "flappy":
+      settings.pipeGap = /hard|tight|narrow/.test(p) ? 120 : /easy|wide/.test(p) ? 200 : 160;
+      settings.gravity = /hard|fast|intense/.test(p) ? 0.7 : /easy|slow/.test(p) ? 0.35 : 0.5;
+      settings.pipeSpeed = /fast|hard/.test(p) ? 3.5 : /slow|easy/.test(p) ? 2 : 2.8;
+      break;
+    case "shooter":
+      settings.enemySpeed = /fast|hard|intense/.test(p) ? 2.5 : /slow|easy/.test(p) ? 1 : 1.8;
+      settings.rapidFire = /rapid|machine|auto/.test(p);
+      settings.theme = /space|cosmic|star|galaxy/.test(p) ? "space" : "default";
+      break;
+    case "tetris":
+      settings.dropSpeed = /fast|hard|intense/.test(p) ? 400 : /slow|easy/.test(p) ? 800 : 600;
+      settings.gridWidth = /wide|big/.test(p) ? 12 : /narrow|small/.test(p) ? 8 : 10;
+      break;
+    case "memory":
+      settings.gridSize = /hard|big|large/.test(p) ? 6 : /easy|small/.test(p) ? 3 : 4;
+      settings.timeLimit = /timed|rush|speed/.test(p) ? 60 : 0;
+      break;
   }
 
   return settings;
@@ -102,6 +127,10 @@ function parsePrompt(prompt: string): ParsedPrompt {
     breakout: "Smash every brick and chase the high score.",
     runner: "Dodge obstacles in this endless runner.",
     clicker: "Tap, upgrade, and build your empire.",
+    flappy: "Tap to fly through gaps and beat your high score.",
+    shooter: "Blast asteroids and survive the cosmic onslaught.",
+    tetris: "Stack blocks and clear lines for big points.",
+    memory: "Flip cards and find all the matching pairs.",
   };
 
   return {
@@ -149,5 +178,9 @@ export function getExamplePrompts(): string[] {
     "A puzzle game where snakes connect matching colors",
     "A fast brick breaker with power-ups and 3 lives",
     "A competitive local multiplayer pong battle",
+    "A flappy bird game with narrow pipes and fast gravity",
+    "A space shooter where you blast asteroids with rapid fire",
+    "A classic tetris game with falling blocks",
+    "A memory card matching game with a 4x4 grid",
   ];
 }

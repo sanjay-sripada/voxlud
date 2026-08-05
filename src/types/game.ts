@@ -1,4 +1,13 @@
-export type GameType = "pong" | "snake" | "breakout" | "runner" | "clicker";
+export type GameType =
+  | "pong"
+  | "snake"
+  | "breakout"
+  | "runner"
+  | "clicker"
+  | "flappy"
+  | "shooter"
+  | "tetris"
+  | "memory";
 
 export type GameMode = "solo" | "local-multiplayer" | "online";
 

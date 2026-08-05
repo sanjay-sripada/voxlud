@@ -7,6 +7,10 @@ const TYPE_LABELS: Record<string, string> = {
   breakout: "Arcade",
   runner: "Runner",
   clicker: "Clicker",
+  flappy: "Flappy",
+  shooter: "Shooter",
+  tetris: "Tetris",
+  memory: "Memory",
 };
 
 const MODE_LABELS: Record<string, string> = {
@@ -39,6 +43,10 @@ export default function GameCard({ game }: GameCardProps) {
           {config.type === "breakout" && "🧱"}
           {config.type === "runner" && "🏃"}
           {config.type === "clicker" && "☕"}
+          {config.type === "flappy" && "🐦"}
+          {config.type === "shooter" && "🚀"}
+          {config.type === "tetris" && "🧩"}
+          {config.type === "memory" && "🃏"}
         </div>
       </div>
       <div className="p-4">
