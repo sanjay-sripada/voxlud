@@ -1,0 +1,158 @@
+[
+  {
+    "prompt": "A two-player pong game where paddles shrink",
+    "config": {
+      "type": "pong",
+      "mode": "local-multiplayer",
+      "title": "A two-player pong game where paddles shrink",
+      "description": "Classic paddle battle — first to 5 wins!",
+      "theme": {
+        "primary": "#f97316",
+        "secondary": "#fb923c",
+        "background": "#1a1008",
+        "accent": "#a3e635"
+      },
+      "settings": {
+        "shrinkPaddles": true,
+        "speed": 1,
+        "ballSize": 1
+      }
+    },
+    "author": "Anonymous",
+    "featured": false,
+    "id": "1s4jxjQMnz",
+    "plays": 0,
+    "likes": 0,
+    "createdAt": "2026-08-05T18:56:53.816Z"
+  },
+  {
+    "id": "demo-pong",
+    "prompt": "A two-player pong game where paddles shrink after every point",
+    "config": {
+      "type": "pong",
+      "mode": "local-multiplayer",
+      "title": "Shrinking Pong",
+      "description": "Classic paddle battle — paddles shrink after every point!",
+      "theme": {
+        "primary": "#6366f1",
+        "secondary": "#818cf8",
+        "background": "#0f0f23",
+        "accent": "#f472b6"
+      },
+      "settings": {
+        "shrinkPaddles": true,
+        "speed": 1,
+        "ballSize": 1
+      }
+    },
+    "author": "Voxlud",
+    "plays": 1247,
+    "likes": 89,
+    "createdAt": "2026-01-15T10:00:00.000Z",
+    "featured": true
+  },
+  {
+    "id": "demo-runner",
+    "prompt": "A solo mobile runner where every tap flips gravity",
+    "config": {
+      "type": "runner",
+      "mode": "solo",
+      "title": "Gravity Flip Runner",
+      "description": "Dodge obstacles by flipping gravity on tap!",
+      "theme": {
+        "primary": "#10b981",
+        "secondary": "#34d399",
+        "background": "#0a1a14",
+        "accent": "#fbbf24"
+      },
+      "settings": {
+        "gravityFlip": true,
+        "obstacleSpeed": 1.2,
+        "theme": "neon"
+      }
+    },
+    "author": "Voxlud",
+    "plays": 892,
+    "likes": 67,
+    "createdAt": "2026-01-20T14:30:00.000Z",
+    "featured": true
+  },
+  {
+    "id": "demo-clicker",
+    "prompt": "A cozy cat cafe tycoon with upgrades and outfits",
+    "config": {
+      "type": "clicker",
+      "mode": "solo",
+      "title": "Cozy Cat Cafe",
+      "description": "Tap, upgrade, and build your purrfect cafe empire.",
+      "theme": {
+        "primary": "#f97316",
+        "secondary": "#fb923c",
+        "background": "#1a1008",
+        "accent": "#a3e635"
+      },
+      "settings": {
+        "upgrades": true,
+        "autoClick": true,
+        "theme": "cafe"
+      }
+    },
+    "author": "Voxlud",
+    "plays": 634,
+    "likes": 52,
+    "createdAt": "2026-02-01T09:00:00.000Z",
+    "featured": true
+  },
+  {
+    "id": "demo-snake",
+    "prompt": "A puzzle game where snakes connect matching colors",
+    "config": {
+      "type": "snake",
+      "mode": "solo",
+      "title": "Color Connect Snake",
+      "description": "Grow your snake and match colors to score big.",
+      "theme": {
+        "primary": "#8b5cf6",
+        "secondary": "#a78bfa",
+        "background": "#120a1f",
+        "accent": "#22d3ee"
+      },
+      "settings": {
+        "colorMatch": true,
+        "gridSize": 16,
+        "speed": 150
+      }
+    },
+    "author": "Voxlud",
+    "plays": 445,
+    "likes": 38,
+    "createdAt": "2026-02-10T16:00:00.000Z",
+    "featured": false
+  },
+  {
+    "id": "demo-breakout",
+    "prompt": "A fast brick breaker with power-ups and 3 lives",
+    "config": {
+      "type": "breakout",
+      "mode": "solo",
+      "title": "Power Brick Breaker",
+      "description": "Smash every brick and chase the high score.",
+      "theme": {
+        "primary": "#f43f5e",
+        "secondary": "#fb7185",
+        "background": "#1a0a0f",
+        "accent": "#38bdf8"
+      },
+      "settings": {
+        "rows": 5,
+        "powerUps": true,
+        "lives": 3
+      }
+    },
+    "author": "Voxlud",
+    "plays": 723,
+    "likes": 61,
+    "createdAt": "2026-02-15T11:00:00.000Z",
+    "featured": true
+  }
+]
