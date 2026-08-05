@@ -14,11 +14,23 @@ export function getSupabaseAnonKey() {
   return key;
 }
 
+const PLACEHOLDER_PATTERNS = [
+  "your-project",
+  "your-anon-key",
+  "your_supabase",
+  "example.com",
+];
+
+function isPlaceholder(value: string | undefined) {
+  if (!value) return true;
+  const lower = value.toLowerCase();
+  return PLACEHOLDER_PATTERNS.some((pattern) => lower.includes(pattern));
+}
+
 export function isSupabaseConfigured() {
-  return !!(
-    process.env.NEXT_PUBLIC_SUPABASE_URL &&
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  );
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  return !!(url && key && !isPlaceholder(url) && !isPlaceholder(key));
 }
 
 export function getSiteUrl() {

@@ -47,7 +47,9 @@ export default function SignInPageClient() {
         <p className="mb-8 text-center text-zinc-400">Sign in to create and manage your games</p>
 
         <div className="space-y-4">
-          <GoogleSignInButton callbackUrl={callbackUrl} />
+          {error && <p className="text-sm text-red-400">{error}</p>}
+
+          <GoogleSignInButton callbackUrl={callbackUrl} onError={setError} />
 
           <div className="relative flex items-center py-2">
             <div className="flex-1 border-t border-white/10" />
@@ -84,8 +86,6 @@ export default function SignInPageClient() {
                 placeholder="••••••••"
               />
             </div>
-
-            {error && <p className="text-sm text-red-400">{error}</p>}
 
             <button
               type="submit"

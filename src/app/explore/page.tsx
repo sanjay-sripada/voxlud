@@ -17,8 +17,12 @@ export default async function ExplorePage() {
 
   try {
     games = await getAllGames();
-  } catch {
-    error = "Could not load games. Check your Supabase connection and run the migration.";
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    error =
+      process.env.NODE_ENV === "development"
+        ? `Could not load games: ${message}`
+        : "Could not load games. Check your Supabase connection and run the migration.";
   }
 
   return (

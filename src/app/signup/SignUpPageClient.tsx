@@ -77,7 +77,9 @@ export default function SignUpPageClient() {
         </p>
 
         <div className="space-y-4">
-          <GoogleSignInButton label="Sign up with Google" callbackUrl={callbackUrl} />
+          {error && <p className="text-sm text-red-400">{error}</p>}
+
+          <GoogleSignInButton label="Sign up with Google" callbackUrl={callbackUrl} onError={setError} />
 
           <div className="relative flex items-center py-2">
             <div className="flex-1 border-t border-white/10" />
@@ -129,8 +131,6 @@ export default function SignUpPageClient() {
                 placeholder="At least 6 characters"
               />
             </div>
-
-            {error && <p className="text-sm text-red-400">{error}</p>}
 
             <button
               type="submit"

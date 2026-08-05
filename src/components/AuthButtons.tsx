@@ -75,19 +75,29 @@ export default function AuthButtons() {
 export function GoogleSignInButton({
   label = "Continue with Google",
   callbackUrl = "/create",
+  onError,
 }: {
   label?: string;
   callbackUrl?: string;
+  onError?: (message: string) => void;
 }) {
   const handleGoogleSignIn = async () => {
     const supabase = createClient();
-    await supabase.auth.signInWithOAuth({
+    const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(callbackUrl)}`,
         queryParams: { access_type: "offline", prompt: "consent" },
       },
     });
+
+    if (error) {
+      const message =
+        error.message.includes("not enabled") || error.message.includes("Unsupported provider")
+          ? "Google sign-in is not enabled yet. Enable it in Supabase → Authentication → Providers → Google."
+          : error.message;
+      onError?.(message);
+    }
   };
 
   return (

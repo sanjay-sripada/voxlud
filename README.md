@@ -20,7 +20,8 @@ Production-ready stack: **Next.js 16**, **Supabase Auth** (Google OAuth + email)
 
 ```bash
 npm install
-cp .env.example .env.local
+cp .env.example .env.local          # dev
+cp .env.example .env.production.local  # prod (optional, for local prod builds)
 ```
 
 ### 2. Create a Supabase project
@@ -57,10 +58,16 @@ In Supabase: **Authentication → URL Configuration**
 | Site URL | `http://localhost:3000` (dev) or your production domain |
 | Redirect URLs | `http://localhost:3000/auth/callback`, `https://yourdomain.com/auth/callback` |
 
-Set in `.env.local`:
+**Dev** — set in `.env.local`:
 
 ```bash
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
+```
+
+**Prod** — set in `.env.production.local` (and Vercel env vars):
+
+```bash
+NEXT_PUBLIC_SITE_URL=https://voxlud.vercel.app
 ```
 
 ### 6. Run the app
