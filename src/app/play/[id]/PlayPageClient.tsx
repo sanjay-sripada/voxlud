@@ -7,11 +7,36 @@ import GameCanvas from "@/components/GameCanvas";
 import type { Game } from "@/types/game";
 
 const CONTROLS: Record<string, string[]> = {
-  pong: ["W/S or ↑/↓ — Player 1", "I/K — Player 2 (multiplayer)", "First to 5 wins"],
-  snake: ["Arrow keys or WASD to move", "Eat colored food to grow", "Don't hit walls or yourself"],
-  breakout: ["←/→ or A/D to move paddle", "Break all bricks to win", "Don't lose all lives"],
-  runner: ["Space or ↑ to jump / flip gravity", "Dodge obstacles", "Survive as long as you can"],
-  clicker: ["Click the circle to earn coins", "Press 1/2/3 to buy upgrades", "Build your empire"],
+  pong: [
+    "W/S or ↑/↓ — Player 1",
+    "Touch & drag left side — Player 1 (mobile)",
+    "I/K — Player 2 (multiplayer)",
+    "First to 5 wins",
+  ],
+  snake: [
+    "Arrow keys or WASD to move",
+    "Swipe to steer (mobile)",
+    "Eat colored food to grow",
+    "Don't hit walls or yourself",
+  ],
+  breakout: [
+    "←/→ or A/D to move paddle",
+    "Touch & drag to move paddle (mobile)",
+    "Break all bricks to win",
+    "Don't lose all lives",
+  ],
+  runner: [
+    "Space or ↑ to jump / flip gravity",
+    "Tap screen to jump / flip (mobile)",
+    "Dodge obstacles",
+    "Survive as long as you can",
+  ],
+  clicker: [
+    "Tap the circle to earn coins",
+    "Tap upgrade rows to buy",
+    "Press 1/2/3 to buy upgrades (desktop)",
+    "Build your empire",
+  ],
 };
 
 export default function PlayPageClient() {

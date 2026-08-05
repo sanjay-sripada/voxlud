@@ -14,6 +14,13 @@ export default function GameCanvas({ config, onScoreChange, onGameOver }: GameCa
   const stateRef = useRef<Record<string, unknown>>({});
   const animRef = useRef<number>(0);
   const keysRef = useRef<Set<string>>(new Set());
+  const touchRef = useRef({
+    pointerY: null as number | null,
+    pointerX: null as number | null,
+    pendingDir: null as { x: number; y: number } | null,
+    actionTap: false,
+    restart: false,
+  });
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     keysRef.current.add(e.key.toLowerCase());
@@ -133,6 +140,9 @@ export default function GameCanvas({ config, onScoreChange, onGameOver }: GameCa
       const keys = keysRef.current;
       if (keys.has("w") || keys.has("arrowup")) p1.y = Math.max(p1.h / 2, p1.y - 6);
       if (keys.has("s") || keys.has("arrowdown")) p1.y = Math.min(canvas.height - p1.h / 2, p1.y + 6);
+      if (touchRef.current.pointerY !== null) {
+        p1.y = Math.max(p1.h / 2, Math.min(canvas.height - p1.h / 2, touchRef.current.pointerY));
+      }
       if (isMulti) {
         if (keys.has("arrowup") && !keys.has("w")) p1.y = Math.max(p1.h / 2, p1.y - 6);
         if (keys.has("i")) p2.y = Math.max(p2.h / 2, p2.y - 6);
@@ -218,6 +228,14 @@ export default function GameCanvas({ config, onScoreChange, onGameOver }: GameCa
       if (keys.has("arrowdown") || keys.has("s")) s.dir = { x: 0, y: 1 };
       if (keys.has("arrowleft") || keys.has("a")) s.dir = { x: -1, y: 0 };
       if (keys.has("arrowright") || keys.has("d")) s.dir = { x: 1, y: 0 };
+
+      if (touchRef.current.pendingDir) {
+        const next = touchRef.current.pendingDir;
+        const reversing =
+          (next.x !== 0 && next.x === -s.dir.x) || (next.y !== 0 && next.y === -s.dir.y);
+        if (!reversing) s.dir = next;
+        touchRef.current.pendingDir = null;
+      }
 
       s.moveTimer += 16;
       if (s.moveTimer < s.moveInterval) return;
@@ -320,6 +338,12 @@ export default function GameCanvas({ config, onScoreChange, onGameOver }: GameCa
       const keys = keysRef.current;
       if (keys.has("arrowleft") || keys.has("a")) s.paddle.x = Math.max(s.paddle.w / 2, s.paddle.x - 7);
       if (keys.has("arrowright") || keys.has("d")) s.paddle.x = Math.min(canvas.width - s.paddle.w / 2, s.paddle.x + 7);
+      if (touchRef.current.pointerX !== null) {
+        s.paddle.x = Math.max(
+          s.paddle.w / 2,
+          Math.min(canvas.width - s.paddle.w / 2, touchRef.current.pointerX)
+        );
+      }
 
       s.ball.x += s.ball.vx;
       s.ball.y += s.ball.vy;
@@ -423,17 +447,22 @@ export default function GameCanvas({ config, onScoreChange, onGameOver }: GameCa
 
       if (s.gravityFlip) {
         const keys = keysRef.current;
-        if (keys.has(" ") || keys.has("arrowup") || keys.has("w")) {
+        if (keys.has(" ") || keys.has("arrowup") || keys.has("w") || touchRef.current.actionTap) {
           s.gravity *= -1;
           keysRef.current.delete(" ");
           keysRef.current.delete("arrowup");
           keysRef.current.delete("w");
+          touchRef.current.actionTap = false;
         }
       } else {
         const keys = keysRef.current;
-        if ((keys.has(" ") || keys.has("arrowup") || keys.has("w")) && s.player.grounded) {
+        if (
+          (keys.has(" ") || keys.has("arrowup") || keys.has("w") || touchRef.current.actionTap) &&
+          s.player.grounded
+        ) {
           s.player.vy = -12;
           s.player.grounded = false;
+          touchRef.current.actionTap = false;
         }
       }
 
@@ -601,14 +630,16 @@ export default function GameCanvas({ config, onScoreChange, onGameOver }: GameCa
       ctx.fillStyle = "#ffffff66";
       ctx.font = "12px sans-serif";
       ctx.textAlign = "center";
-      ctx.fillText("Click the circle to earn! Press 1/2/3 to buy upgrades", cx, canvas.height - 16);
+      ctx.fillText("Tap circle & upgrades! Press 1/2/3 on desktop", cx, canvas.height - 16);
     }
 
-    function handleClickerInput(e: MouseEvent) {
+    function handlePointerInput(clientX: number, clientY: number) {
       if (config.type !== "clicker" || gameOver) return;
       const rect = canvas.getBoundingClientRect();
-      const mx = e.clientX - rect.left;
-      const my = e.clientY - rect.top;
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      const mx = (clientX - rect.left) * scaleX;
+      const my = (clientY - rect.top) * scaleY;
       const s = stateRef.current as {
         coins: number;
         perClick: number;
@@ -636,6 +667,102 @@ export default function GameCanvas({ config, onScoreChange, onGameOver }: GameCa
           else s.perSecond += u.level * 0.5;
         }
       });
+    }
+
+    function handleClickerInput(e: MouseEvent) {
+      handlePointerInput(e.clientX, e.clientY);
+    }
+
+    let swipeStart: { x: number; y: number } | null = null;
+
+    function canvasCoords(clientX: number, clientY: number) {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      return {
+        x: (clientX - rect.left) * scaleX,
+        y: (clientY - rect.top) * scaleY,
+      };
+    }
+
+    function onTouchStart(e: TouchEvent) {
+      const touch = e.touches[0];
+      if (!touch) return;
+
+      if (gameOver) {
+        touchRef.current.restart = true;
+        e.preventDefault();
+        return;
+      }
+
+      const { x, y } = canvasCoords(touch.clientX, touch.clientY);
+
+      if (config.type === "clicker") {
+        handlePointerInput(touch.clientX, touch.clientY);
+        e.preventDefault();
+        return;
+      }
+
+      if (config.type === "snake" || config.type === "runner") {
+        swipeStart = { x, y };
+        e.preventDefault();
+        return;
+      }
+
+      if (config.type === "pong") {
+        touchRef.current.pointerY = y;
+        e.preventDefault();
+        return;
+      }
+
+      if (config.type === "breakout") {
+        touchRef.current.pointerX = x;
+        e.preventDefault();
+      }
+    }
+
+    function onTouchMove(e: TouchEvent) {
+      const touch = e.touches[0];
+      if (!touch || gameOver) return;
+
+      const { x, y } = canvasCoords(touch.clientX, touch.clientY);
+
+      if (config.type === "pong") {
+        touchRef.current.pointerY = y;
+        e.preventDefault();
+      } else if (config.type === "breakout") {
+        touchRef.current.pointerX = x;
+        e.preventDefault();
+      } else if (config.type === "snake" || config.type === "runner") {
+        e.preventDefault();
+      }
+    }
+
+    function onTouchEnd(e: TouchEvent) {
+      const touch = e.changedTouches[0];
+      if (!touch) return;
+
+      if (config.type === "runner" && !gameOver) {
+        touchRef.current.actionTap = true;
+      }
+
+      if (config.type === "snake" && swipeStart && !gameOver) {
+        const { x, y } = canvasCoords(touch.clientX, touch.clientY);
+        const dx = x - swipeStart.x;
+        const dy = y - swipeStart.y;
+        const minSwipe = 20;
+        if (Math.abs(dx) >= minSwipe || Math.abs(dy) >= minSwipe) {
+          if (Math.abs(dx) > Math.abs(dy)) {
+            touchRef.current.pendingDir = { x: dx > 0 ? 1 : -1, y: 0 };
+          } else {
+            touchRef.current.pendingDir = { x: 0, y: dy > 0 ? 1 : -1 };
+          }
+        }
+      }
+
+      swipeStart = null;
+      if (config.type === "pong") touchRef.current.pointerY = null;
+      if (config.type === "breakout") touchRef.current.pointerX = null;
     }
 
     function handleClickerKeys() {
@@ -669,6 +796,9 @@ export default function GameCanvas({ config, onScoreChange, onGameOver }: GameCa
 
     initGame();
     canvas.addEventListener("click", handleClickerInput);
+    canvas.addEventListener("touchstart", onTouchStart, { passive: false });
+    canvas.addEventListener("touchmove", onTouchMove, { passive: false });
+    canvas.addEventListener("touchend", onTouchEnd);
 
     const loop = () => {
       if (gameOver) {
@@ -682,8 +812,15 @@ export default function GameCanvas({ config, onScoreChange, onGameOver }: GameCa
         ctx.fillText(`Score: ${score}`, canvas.width / 2, canvas.height / 2 + 20);
         ctx.font = "14px sans-serif";
         ctx.fillStyle = "#ffffff88";
-        ctx.fillText("Press R to restart", canvas.width / 2, canvas.height / 2 + 60);
-        if (keysRef.current.has("r")) {
+        ctx.fillText(
+          typeof window !== "undefined" && "ontouchstart" in window
+            ? "Tap to restart"
+            : "Press R to restart",
+          canvas.width / 2,
+          canvas.height / 2 + 60
+        );
+        if (keysRef.current.has("r") || touchRef.current.restart) {
+          touchRef.current.restart = false;
           gameOver = false;
           score = 0;
           initGame();
@@ -725,13 +862,17 @@ export default function GameCanvas({ config, onScoreChange, onGameOver }: GameCa
       cancelAnimationFrame(animRef.current);
       window.removeEventListener("resize", resize);
       canvas.removeEventListener("click", handleClickerInput);
+      canvas.removeEventListener("touchstart", onTouchStart);
+      canvas.removeEventListener("touchmove", onTouchMove);
+      canvas.removeEventListener("touchend", onTouchEnd);
     };
   }, [config, onScoreChange, onGameOver]);
 
   return (
     <canvas
       ref={canvasRef}
-      className="h-full w-full cursor-pointer rounded-xl"
+      className="h-full w-full cursor-pointer rounded-xl touch-none"
+      style={{ touchAction: "none" }}
       tabIndex={0}
     />
   );
