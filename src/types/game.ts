@@ -7,7 +7,11 @@ export type GameType =
   | "flappy"
   | "shooter"
   | "tetris"
-  | "memory";
+  | "memory"
+  | "whack"
+  | "dodge"
+  | "slide"
+  | "catch";
 
 export type GameMode = "solo" | "local-multiplayer" | "online";
 

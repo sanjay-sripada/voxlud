@@ -99,6 +99,18 @@ export default function GameCanvas({
         case "memory":
           initMemory();
           break;
+        case "whack":
+          initWhack();
+          break;
+        case "dodge":
+          initDodge();
+          break;
+        case "slide":
+          initSlide();
+          break;
+        case "catch":
+          initCatch();
+          break;
       }
     };
 
@@ -1215,6 +1227,517 @@ export default function GameCanvas({
       ctx.fillText("Tap cards to flip and match pairs", canvas.width / 2, canvas.height - 16);
     }
 
+    // ─── WHACK ───
+    function initWhack() {
+      const cols = 3;
+      const rows = 3;
+      const cellSize = Math.min((canvas.width - 40) / cols, (canvas.height - 100) / rows);
+      const duration = ((settings.duration as number) || 30) * 1000;
+      stateRef.current = {
+        cols,
+        rows,
+        cellSize,
+        offsetX: (canvas.width - cols * cellSize) / 2,
+        offsetY: (canvas.height - rows * cellSize) / 2 + 10,
+        moles: Array.from({ length: cols * rows }, () => null) as ({
+          active: boolean;
+          golden: boolean;
+          timer: number;
+          maxTime: number;
+        } | null)[],
+        spawnTimer: 0,
+        duration,
+        timeLeft: duration,
+        moleSpeed: (settings.moleSpeed as number) || 1,
+      };
+    }
+
+    function updateWhack() {
+      const s = stateRef.current as {
+        moles: ({ active: boolean; golden: boolean; timer: number; maxTime: number } | null)[];
+        spawnTimer: number;
+        moleSpeed: number;
+        timeLeft: number;
+      };
+      s.timeLeft -= 16;
+      if (s.timeLeft <= 0) {
+        endGame(score);
+        return;
+      }
+
+      s.spawnTimer += 16;
+      if (s.spawnTimer >= 700 / s.moleSpeed) {
+        s.spawnTimer = 0;
+        const open = s.moles
+          .map((m, i) => (m?.active ? -1 : i))
+          .filter((i) => i >= 0);
+        if (open.length > 0) {
+          const idx = open[Math.floor(Math.random() * open.length)];
+          const golden = Math.random() < 0.12;
+          s.moles[idx] = {
+            active: true,
+            golden,
+            timer: 0,
+            maxTime: (golden ? 900 : 1600) / s.moleSpeed,
+          };
+        }
+      }
+
+      s.moles.forEach((m, i) => {
+        if (!m?.active) return;
+        m.timer += 16;
+        if (m.timer >= m.maxTime) s.moles[i] = null;
+      });
+    }
+
+    function drawWhack() {
+      const s = stateRef.current as {
+        cols: number;
+        rows: number;
+        cellSize: number;
+        offsetX: number;
+        offsetY: number;
+        moles: ({ active: boolean; golden: boolean } | null)[];
+        timeLeft: number;
+        duration: number;
+      };
+      ctx.fillStyle = theme.background;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      for (let i = 0; i < s.cols * s.rows; i++) {
+        const col = i % s.cols;
+        const row = Math.floor(i / s.cols);
+        const x = s.offsetX + col * s.cellSize;
+        const y = s.offsetY + row * s.cellSize;
+        ctx.fillStyle = theme.secondary + "33";
+        ctx.beginPath();
+        ctx.ellipse(x + s.cellSize / 2, y + s.cellSize * 0.85, s.cellSize * 0.35, s.cellSize * 0.12, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        const mole = s.moles[i];
+        if (mole?.active) {
+          ctx.font = `${s.cellSize * 0.5}px sans-serif`;
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(mole.golden ? "⭐" : "🐹", x + s.cellSize / 2, y + s.cellSize / 2);
+        }
+      }
+
+      ctx.fillStyle = "#fff";
+      ctx.font = "16px sans-serif";
+      ctx.textAlign = "left";
+      ctx.fillText(`Score: ${score}`, 16, 28);
+      ctx.fillText(`Time: ${Math.ceil(s.timeLeft / 1000)}s`, 16, 50);
+      ctx.font = "12px sans-serif";
+      ctx.fillStyle = "#ffffff88";
+      ctx.textAlign = "center";
+      ctx.fillText("Tap moles before they hide!", canvas.width / 2, canvas.height - 16);
+    }
+
+    function handleWhackTap(mx: number, my: number) {
+      const s = stateRef.current as {
+        cols: number;
+        rows: number;
+        cellSize: number;
+        offsetX: number;
+        offsetY: number;
+        moles: ({ active: boolean; golden: boolean } | null)[];
+      };
+      const col = Math.floor((mx - s.offsetX) / s.cellSize);
+      const row = Math.floor((my - s.offsetY) / s.cellSize);
+      if (col < 0 || col >= s.cols || row < 0 || row >= s.rows) return;
+      const idx = row * s.cols + col;
+      const mole = s.moles[idx];
+      if (!mole?.active) return;
+      score += mole.golden ? 25 : 10;
+      onScoreChange?.(score);
+      s.moles[idx] = null;
+    }
+
+    // ─── DODGE ───
+    function initDodge() {
+      stateRef.current = {
+        player: { x: canvas.width / 2, w: 44, h: 20 },
+        hazards: [] as { x: number; y: number; w: number; h: number; vy: number }[],
+        fallSpeed: (settings.fallSpeed as number) || 1.6,
+        density: (settings.density as number) || 1,
+        spawnTimer: 0,
+        spawnInterval: 45,
+      };
+    }
+
+    function updateDodge() {
+      const s = stateRef.current as {
+        player: { x: number; w: number; h: number };
+        hazards: { x: number; y: number; w: number; h: number; vy: number }[];
+        fallSpeed: number;
+        density: number;
+        spawnTimer: number;
+        spawnInterval: number;
+      };
+      const keys = keysRef.current;
+      if (keys.has("arrowleft") || keys.has("a")) s.player.x = Math.max(s.player.w / 2, s.player.x - 7);
+      if (keys.has("arrowright") || keys.has("d")) s.player.x = Math.min(canvas.width - s.player.w / 2, s.player.x + 7);
+      if (touchRef.current.pointerX !== null) {
+        s.player.x = Math.max(
+          s.player.w / 2,
+          Math.min(canvas.width - s.player.w / 2, touchRef.current.pointerX)
+        );
+      }
+
+      s.spawnTimer++;
+      if (s.spawnTimer >= s.spawnInterval / s.density) {
+        s.spawnTimer = 0;
+        const w = 16 + Math.random() * 28;
+        s.hazards.push({
+          x: Math.random() * (canvas.width - w),
+          y: -30,
+          w,
+          h: w,
+          vy: (2 + Math.random() * 2) * s.fallSpeed,
+        });
+      }
+
+      s.hazards.forEach((h) => (h.y += h.vy));
+      s.hazards = s.hazards.filter((h) => h.y < canvas.height + 40);
+
+      score = Math.floor(score + 0.15 * s.fallSpeed);
+      onScoreChange?.(score);
+
+      const py = canvas.height - 40;
+      const px = s.player.x;
+      for (const h of s.hazards) {
+        if (
+          px + s.player.w / 2 > h.x &&
+          px - s.player.w / 2 < h.x + h.w &&
+          py < h.y + h.h &&
+          py + s.player.h > h.y
+        ) {
+          endGame(score);
+          return;
+        }
+      }
+    }
+
+    function drawDodge() {
+      const s = stateRef.current as {
+        player: { x: number; w: number; h: number };
+        hazards: { x: number; y: number; w: number; h: number }[];
+      };
+      ctx.fillStyle = theme.background;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = theme.accent;
+      s.hazards.forEach((h) => {
+        ctx.beginPath();
+        ctx.arc(h.x + h.w / 2, h.y + h.h / 2, h.w / 2, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      const py = canvas.height - 40;
+      ctx.fillStyle = theme.primary;
+      ctx.fillRect(s.player.x - s.player.w / 2, py, s.player.w, s.player.h);
+
+      ctx.fillStyle = "#fff";
+      ctx.font = "16px sans-serif";
+      ctx.textAlign = "left";
+      ctx.fillText(`Score: ${score}`, 16, 28);
+      ctx.font = "12px sans-serif";
+      ctx.fillStyle = "#ffffff88";
+      ctx.fillText("Dodge the falling hazards!", 16, canvas.height - 16);
+    }
+
+    // ─── SLIDE (2048) ───
+    function initSlide() {
+      const size = (settings.gridSize as number) || 4;
+      const cellSize = Math.min((canvas.width - 48) / size, (canvas.height - 100) / size);
+      const grid = Array.from({ length: size }, () => Array(size).fill(0));
+      slideSpawn(grid);
+      slideSpawn(grid);
+      stateRef.current = {
+        size,
+        cellSize,
+        offsetX: (canvas.width - size * cellSize) / 2,
+        offsetY: (canvas.height - size * cellSize) / 2 + 10,
+        grid,
+        target: (settings.target as number) || 2048,
+        pendingMove: null as { x: number; y: number } | null,
+      };
+    }
+
+    function slideSpawn(grid: number[][]) {
+      const empty: [number, number][] = [];
+      grid.forEach((row, r) => row.forEach((v, c) => { if (!v) empty.push([r, c]); }));
+      if (!empty.length) return;
+      const [r, c] = empty[Math.floor(Math.random() * empty.length)];
+      grid[r][c] = Math.random() < 0.9 ? 2 : 4;
+    }
+
+    function slideCanMove(grid: number[][]): boolean {
+      const size = grid.length;
+      for (let r = 0; r < size; r++) {
+        for (let c = 0; c < size; c++) {
+          const v = grid[r][c];
+          if (!v) return true;
+          if (c < size - 1 && grid[r][c + 1] === v) return true;
+          if (r < size - 1 && grid[r + 1][c] === v) return true;
+        }
+      }
+      return false;
+    }
+
+    function slideLine(line: number[]) {
+      const filtered = line.filter((v) => v);
+      const result: number[] = [];
+      let gained = 0;
+      let i = 0;
+      while (i < filtered.length) {
+        if (i + 1 < filtered.length && filtered[i] === filtered[i + 1]) {
+          const merged = filtered[i] * 2;
+          result.push(merged);
+          gained += merged;
+          i += 2;
+        } else {
+          result.push(filtered[i]);
+          i += 1;
+        }
+      }
+      while (result.length < line.length) result.push(0);
+      const changed = line.some((v, idx) => v !== result[idx]);
+      return { line: result, changed, gained };
+    }
+
+    function slideMove(grid: number[][], dx: number, dy: number): boolean {
+      const size = grid.length;
+      let moved = false;
+      let gained = 0;
+
+      if (dx !== 0) {
+        for (let r = 0; r < size; r++) {
+          const row = dx < 0 ? [...grid[r]] : [...grid[r]].reverse();
+          const { line, changed, gained: g } = slideLine(row);
+          const out = dx < 0 ? line : [...line].reverse();
+          if (changed) {
+            moved = true;
+            gained += g;
+            grid[r] = out;
+          }
+        }
+      } else {
+        for (let c = 0; c < size; c++) {
+          const col = grid.map((row) => row[c]);
+          const working = dy < 0 ? [...col] : [...col].reverse();
+          const { line, changed, gained: g } = slideLine(working);
+          const out = dy < 0 ? line : [...line].reverse();
+          if (changed) {
+            moved = true;
+            gained += g;
+            for (let r = 0; r < size; r++) grid[r][c] = out[r];
+          }
+        }
+      }
+
+      if (gained > 0) {
+        score += gained;
+        onScoreChange?.(score);
+      }
+      return moved;
+    }
+
+    function updateSlide() {
+      const s = stateRef.current as {
+        grid: number[][];
+        target: number;
+        pendingMove: { x: number; y: number } | null;
+      };
+      const keys = keysRef.current;
+      let dx = 0;
+      let dy = 0;
+      if (keys.has("arrowleft") || keys.has("a")) dx = -1;
+      if (keys.has("arrowright") || keys.has("d")) dx = 1;
+      if (keys.has("arrowup") || keys.has("w")) dy = -1;
+      if (keys.has("arrowdown") || keys.has("s")) dy = 1;
+      if (dx || dy) {
+        keysRef.current.delete("arrowleft");
+        keysRef.current.delete("a");
+        keysRef.current.delete("arrowright");
+        keysRef.current.delete("d");
+        keysRef.current.delete("arrowup");
+        keysRef.current.delete("w");
+        keysRef.current.delete("arrowdown");
+        keysRef.current.delete("s");
+      }
+
+      if (touchRef.current.pendingDir) {
+        const d = touchRef.current.pendingDir;
+        if (Math.abs(d.x) > Math.abs(d.y)) dx = d.x > 0 ? 1 : -1;
+        else dy = d.y > 0 ? 1 : -1;
+        touchRef.current.pendingDir = null;
+      }
+
+      if (dx || dy) {
+        const moved = slideMove(s.grid, dx, dy);
+        if (moved) {
+          slideSpawn(s.grid);
+          if (s.grid.some((row) => row.some((v) => v >= s.target))) endGame(score);
+          else if (!slideCanMove(s.grid)) endGame(score);
+        }
+      }
+    }
+
+    function drawSlide() {
+      const s = stateRef.current as {
+        size: number;
+        cellSize: number;
+        offsetX: number;
+        offsetY: number;
+        grid: number[][];
+        target: number;
+      };
+      const colors = ["", "#334155", "#475569", "#6366f1", "#818cf8", "#a78bfa", "#f472b6", "#fb7185", "#fbbf24", "#34d399", "#22d3ee", "#f97316"];
+      ctx.fillStyle = theme.background;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      for (let r = 0; r < s.size; r++) {
+        for (let c = 0; c < s.size; c++) {
+          const val = s.grid[r][c];
+          const x = s.offsetX + c * s.cellSize;
+          const y = s.offsetY + r * s.cellSize;
+          ctx.fillStyle = val ? (colors[Math.min(Math.log2(val), colors.length - 1)] || theme.primary) : theme.secondary + "33";
+          ctx.beginPath();
+          ctx.roundRect(x + 3, y + 3, s.cellSize - 6, s.cellSize - 6, 8);
+          ctx.fill();
+          if (val) {
+            ctx.fillStyle = val > 4 ? "#fff" : "#e2e8f0";
+            ctx.font = `bold ${s.cellSize * (val >= 1000 ? 0.28 : 0.36)}px sans-serif`;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(String(val), x + s.cellSize / 2, y + s.cellSize / 2);
+          }
+        }
+      }
+
+      ctx.fillStyle = "#fff";
+      ctx.font = "16px sans-serif";
+      ctx.textAlign = "left";
+      ctx.fillText(`Score: ${score}  Target: ${s.target}`, 16, 28);
+      ctx.font = "12px sans-serif";
+      ctx.fillStyle = "#ffffff88";
+      ctx.textAlign = "center";
+      ctx.fillText("Swipe or use arrows to merge tiles", canvas.width / 2, canvas.height - 16);
+    }
+
+    // ─── CATCH ───
+    function initCatch() {
+      stateRef.current = {
+        basket: { x: canvas.width / 2, w: 70, h: 16 },
+        items: [] as { x: number; y: number; r: number; type: "fruit" | "bomb"; emoji: string }[],
+        fallSpeed: (settings.fallSpeed as number) || 1.4,
+        lives: (settings.lives as number) || 3,
+        missed: 0,
+        spawnTimer: 0,
+        spawnInterval: 55,
+        fruits: ["🍎", "🍊", "🍇", "🍌", "🍓"],
+      };
+    }
+
+    function updateCatch() {
+      const s = stateRef.current as {
+        basket: { x: number; w: number; h: number };
+        items: { x: number; y: number; r: number; type: "fruit" | "bomb"; emoji: string }[];
+        fallSpeed: number;
+        lives: number;
+        missed: number;
+        spawnTimer: number;
+        spawnInterval: number;
+        fruits: string[];
+      };
+      const keys = keysRef.current;
+      if (keys.has("arrowleft") || keys.has("a")) s.basket.x = Math.max(s.basket.w / 2, s.basket.x - 8);
+      if (keys.has("arrowright") || keys.has("d")) s.basket.x = Math.min(canvas.width - s.basket.w / 2, s.basket.x + 8);
+      if (touchRef.current.pointerX !== null) {
+        s.basket.x = Math.max(
+          s.basket.w / 2,
+          Math.min(canvas.width - s.basket.w / 2, touchRef.current.pointerX)
+        );
+      }
+
+      s.spawnTimer++;
+      if (s.spawnTimer >= s.spawnInterval) {
+        s.spawnTimer = 0;
+        const bomb = Math.random() < 0.18;
+        s.items.push({
+          x: 20 + Math.random() * (canvas.width - 40),
+          y: -20,
+          r: 16,
+          type: bomb ? "bomb" : "fruit",
+          emoji: bomb ? "💣" : s.fruits[Math.floor(Math.random() * s.fruits.length)],
+        });
+      }
+
+      const by = canvas.height - 36;
+      s.items.forEach((item) => (item.y += 3 * s.fallSpeed));
+      s.items = s.items.filter((item) => {
+        if (item.y - item.r > canvas.height) {
+          if (item.type === "fruit") {
+            s.missed++;
+            if (s.missed >= 3) {
+              s.lives--;
+              s.missed = 0;
+              if (s.lives <= 0) endGame(score);
+            }
+          }
+          return false;
+        }
+        const caught =
+          item.y + item.r > by &&
+          item.x > s.basket.x - s.basket.w / 2 &&
+          item.x < s.basket.x + s.basket.w / 2;
+        if (caught) {
+          if (item.type === "bomb") {
+            s.lives--;
+            if (s.lives <= 0) endGame(score);
+          } else {
+            score += 10;
+            onScoreChange?.(score);
+          }
+          return false;
+        }
+        return true;
+      });
+    }
+
+    function drawCatch() {
+      const s = stateRef.current as {
+        basket: { x: number; w: number; h: number };
+        items: { x: number; y: number; r: number; emoji: string }[];
+        lives: number;
+      };
+      ctx.fillStyle = theme.background;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      s.items.forEach((item) => {
+        ctx.font = `${item.r * 1.6}px sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(item.emoji, item.x, item.y);
+      });
+
+      const by = canvas.height - 36;
+      ctx.fillStyle = theme.primary;
+      ctx.beginPath();
+      ctx.roundRect(s.basket.x - s.basket.w / 2, by, s.basket.w, s.basket.h, 6);
+      ctx.fill();
+
+      ctx.fillStyle = "#fff";
+      ctx.font = "16px sans-serif";
+      ctx.textAlign = "left";
+      ctx.fillText(`Score: ${score}  Lives: ${s.lives}`, 16, 28);
+      ctx.font = "12px sans-serif";
+      ctx.fillStyle = "#ffffff88";
+      ctx.fillText("Catch fruit, avoid bombs!", 16, canvas.height - 16);
+    }
+
     function handleMemoryTap(mx: number, my: number) {
       const s = stateRef.current as {
         cols: number;
@@ -1258,6 +1781,11 @@ export default function GameCanvas({
 
       if (config.type === "memory") {
         handleMemoryTap(mx, my);
+        return;
+      }
+
+      if (config.type === "whack") {
+        handleWhackTap(mx, my);
         return;
       }
 
@@ -1319,13 +1847,13 @@ export default function GameCanvas({
         return;
       }
 
-      if (config.type === "memory") {
+      if (config.type === "memory" || config.type === "whack") {
         handlePointerInput(touch.clientX, touch.clientY);
         e.preventDefault();
         return;
       }
 
-      if (config.type === "snake" || config.type === "runner" || config.type === "tetris") {
+      if (config.type === "snake" || config.type === "runner" || config.type === "tetris" || config.type === "slide") {
         swipeStart = { x, y };
         e.preventDefault();
         return;
@@ -1337,7 +1865,7 @@ export default function GameCanvas({
         return;
       }
 
-      if (config.type === "shooter") {
+      if (config.type === "shooter" || config.type === "dodge" || config.type === "catch") {
         touchRef.current.pointerX = x;
         touchRef.current.actionTap = true;
         e.preventDefault();
@@ -1365,10 +1893,10 @@ export default function GameCanvas({
       if (config.type === "pong") {
         touchRef.current.pointerY = y;
         e.preventDefault();
-      } else if (config.type === "breakout" || config.type === "shooter") {
+      } else if (config.type === "breakout" || config.type === "shooter" || config.type === "dodge" || config.type === "catch") {
         touchRef.current.pointerX = x;
         e.preventDefault();
-      } else if (config.type === "snake" || config.type === "runner" || config.type === "tetris") {
+      } else if (config.type === "snake" || config.type === "runner" || config.type === "tetris" || config.type === "slide") {
         e.preventDefault();
       }
     }
@@ -1385,7 +1913,7 @@ export default function GameCanvas({
         touchRef.current.actionTap = true;
       }
 
-      if ((config.type === "snake" || config.type === "tetris") && swipeStart && !gameOver) {
+      if ((config.type === "snake" || config.type === "tetris" || config.type === "slide") && swipeStart && !gameOver) {
         const { x, y } = canvasCoords(touch.clientX, touch.clientY);
         const dx = x - swipeStart.x;
         const dy = y - swipeStart.y;
@@ -1401,7 +1929,7 @@ export default function GameCanvas({
 
       swipeStart = null;
       if (config.type === "pong") touchRef.current.pointerY = null;
-      if (config.type === "breakout" || config.type === "shooter") touchRef.current.pointerX = null;
+      if (config.type === "breakout" || config.type === "shooter" || config.type === "dodge" || config.type === "catch") touchRef.current.pointerX = null;
     }
 
     function handleClickerKeys() {
@@ -1462,6 +1990,18 @@ export default function GameCanvas({
         case "memory":
           drawMemory();
           break;
+        case "whack":
+          drawWhack();
+          break;
+        case "dodge":
+          drawDodge();
+          break;
+        case "slide":
+          drawSlide();
+          break;
+        case "catch":
+          drawCatch();
+          break;
       }
     }
 
@@ -1520,6 +2060,22 @@ export default function GameCanvas({
         case "memory":
           updateMemory();
           drawMemory();
+          break;
+        case "whack":
+          updateWhack();
+          drawWhack();
+          break;
+        case "dodge":
+          updateDodge();
+          drawDodge();
+          break;
+        case "slide":
+          updateSlide();
+          drawSlide();
+          break;
+        case "catch":
+          updateCatch();
+          drawCatch();
           break;
       }
 

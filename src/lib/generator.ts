@@ -27,7 +27,11 @@ function detectGameType(prompt: string): GameType {
   if (/snake|serpent|worm|connect.*color|color.*match/.test(p)) return "snake";
   if (/break|brick|breakout|smash/.test(p)) return "breakout";
   if (/click|tycoon|cafe|idle|tap|coin|upgrade/.test(p)) return "clicker";
-  if (/run|runner|jump|gravity|dodge|endless/.test(p)) return "runner";
+  if (/whack|mole|hammer|bash/.test(p)) return "whack";
+  if (/2048|slide.?puzzle|number.?merge|merge.?tile/.test(p)) return "slide";
+  if (/catch|basket|fruit.?catch|collect.?fall/.test(p)) return "catch";
+  if (/dodge|avoid|sidestep|dodgeball/.test(p)) return "dodge";
+  if (/run|runner|jump|gravity|endless/.test(p)) return "runner";
   if (/puzzle|match|connect|block/.test(p)) return "snake";
   return "runner";
 }
@@ -54,6 +58,10 @@ function extractTitle(prompt: string, type: GameType): string {
     shooter: "Space Shooter",
     tetris: "Block Stacker",
     memory: "Memory Match",
+    whack: "Whack Attack",
+    dodge: "Dodge Rush",
+    slide: "Tile Slide",
+    catch: "Fruit Catch",
   };
   return typeNames[type];
 }
@@ -110,6 +118,22 @@ function buildSettings(prompt: string, type: GameType): Record<string, unknown> 
       settings.gridSize = /hard|big|large/.test(p) ? 6 : /easy|small/.test(p) ? 3 : 4;
       settings.timeLimit = /timed|rush|speed/.test(p) ? 60 : 0;
       break;
+    case "whack":
+      settings.duration = /long|marathon/.test(p) ? 45 : /quick|short/.test(p) ? 20 : 30;
+      settings.moleSpeed = /fast|hard|intense/.test(p) ? 1.5 : /slow|easy/.test(p) ? 0.7 : 1;
+      break;
+    case "dodge":
+      settings.fallSpeed = /fast|hard|intense/.test(p) ? 2.2 : /slow|easy/.test(p) ? 1 : 1.6;
+      settings.density = /chaos|many|hard/.test(p) ? 1.5 : 1;
+      break;
+    case "slide":
+      settings.gridSize = 4;
+      settings.target = /4096|hard/.test(p) ? 4096 : 2048;
+      break;
+    case "catch":
+      settings.fallSpeed = /fast|hard/.test(p) ? 2 : /slow|easy/.test(p) ? 1 : 1.4;
+      settings.lives = /hard|one life/.test(p) ? 2 : /easy/.test(p) ? 5 : 3;
+      break;
   }
 
   return settings;
@@ -131,6 +155,10 @@ function parsePrompt(prompt: string): ParsedPrompt {
     shooter: "Blast asteroids and survive the cosmic onslaught.",
     tetris: "Stack blocks and clear lines for big points.",
     memory: "Flip cards and find all the matching pairs.",
+    whack: "Tap moles before they disappear!",
+    dodge: "Dodge falling hazards and survive.",
+    slide: "Swipe tiles and merge to reach 2048.",
+    catch: "Catch fruit in your basket — avoid bombs!",
   };
 
   return {
@@ -182,5 +210,9 @@ export function getExamplePrompts(): string[] {
     "A space shooter where you blast asteroids with rapid fire",
     "A classic tetris game with falling blocks",
     "A memory card matching game with a 4x4 grid",
+    "A whack-a-mole game with fast moles and 30 seconds",
+    "A dodge game where you avoid falling meteor showers",
+    "A 2048 slide puzzle with merge tiles",
+    "A fruit catch game with a basket and bomb hazards",
   ];
 }

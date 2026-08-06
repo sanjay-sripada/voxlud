@@ -11,6 +11,10 @@ const TYPE_LABELS: Record<string, string> = {
   shooter: "Shooter",
   tetris: "Tetris",
   memory: "Memory",
+  whack: "Whack",
+  dodge: "Dodge",
+  slide: "2048",
+  catch: "Catch",
 };
 
 const MODE_LABELS: Record<string, string> = {
@@ -47,6 +51,10 @@ export default function GameCard({ game }: GameCardProps) {
           {config.type === "shooter" && "🚀"}
           {config.type === "tetris" && "🧩"}
           {config.type === "memory" && "🃏"}
+          {config.type === "whack" && "🔨"}
+          {config.type === "dodge" && "💨"}
+          {config.type === "slide" && "🔢"}
+          {config.type === "catch" && "🧺"}
         </div>
       </div>
       <div className="p-4">

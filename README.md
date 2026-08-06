@@ -11,7 +11,7 @@ Production-ready stack: **Next.js 16**, **Supabase Auth** (Google OAuth + email)
 - **Prompt-to-game** — Describe a game, get a playable result in seconds
 - **My games** — Create, view, share, and delete your games
 - **Explore gallery** — Browse community and demo games
-- **5 game types** — Pong, Snake, Breakout, Runner, Clicker/Tycoon
+- **13 game types** — Pong, Snake, Breakout, Runner, Clicker, Flappy, Shooter, Tetris, Memory, Whack, Dodge, 2048 Slide, Catch
 - **Share links** — Every game gets a unique URL
 
 ## Quick start
@@ -37,9 +37,11 @@ Open **SQL Editor** in Supabase and run the contents of:
 
 ```
 supabase/migrations/001_initial_schema.sql
+supabase/migrations/002_seed_new_games.sql
+supabase/migrations/003_seed_more_games.sql
 ```
 
-This creates `profiles`, `games`, RLS policies, and seeds 5 demo games.
+This creates `profiles`, `games`, RLS policies, and seeds demo games (run all three migrations for the full gallery).
 
 ### 4. Configure Google OAuth
 

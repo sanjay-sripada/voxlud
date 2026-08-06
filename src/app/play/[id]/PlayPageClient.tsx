@@ -61,6 +61,30 @@ const CONTROLS: Record<string, string[]> = {
     "Fewer moves = better score",
     "Match all pairs to win",
   ],
+  whack: [
+    "Tap moles when they pop up",
+    "Score before time runs out",
+    "Fast moles = more points",
+    "Don't miss the golden mole!",
+  ],
+  dodge: [
+    "←/→ or A/D to move",
+    "Touch & drag to dodge (mobile)",
+    "Avoid falling hazards",
+    "Survive as long as you can",
+  ],
+  slide: [
+    "Swipe to slide tiles",
+    "Merge matching numbers",
+    "Reach 2048 to win",
+    "Arrow keys work on desktop",
+  ],
+  catch: [
+    "←/→ or drag to move basket",
+    "Catch fruit for points",
+    "Avoid bombs",
+    "Don't miss too many fruits",
+  ],
 };
 
 export default function PlayPageClient() {
