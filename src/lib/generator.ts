@@ -27,6 +27,10 @@ function detectGameType(prompt: string): GameType {
   if (/snake|serpent|worm|connect.*color|color.*match/.test(p)) return "snake";
   if (/break|brick|breakout|smash/.test(p)) return "breakout";
   if (/click|tycoon|cafe|idle|tap|coin|upgrade/.test(p)) return "clicker";
+  if (/simon|sequence|repeat|pattern|memory.?chain/.test(p)) return "simon";
+  if (/reaction|reflex|quick.?tap|speed.?test/.test(p)) return "reaction";
+  if (/stack.?tower|stacking|align.?block|tower.?stack/.test(p)) return "stack";
+  if (/cross|frogger|crossy|road.?cross|traffic/.test(p)) return "cross";
   if (/whack|mole|hammer|bash/.test(p)) return "whack";
   if (/2048|slide.?puzzle|number.?merge|merge.?tile/.test(p)) return "slide";
   if (/catch|basket|fruit.?catch|collect.?fall/.test(p)) return "catch";
@@ -62,6 +66,10 @@ function extractTitle(prompt: string, type: GameType): string {
     dodge: "Dodge Rush",
     slide: "Tile Slide",
     catch: "Fruit Catch",
+    cross: "Road Crosser",
+    stack: "Tower Stack",
+    simon: "Simon Says",
+    reaction: "Reaction Test",
   };
   return typeNames[type];
 }
@@ -134,6 +142,22 @@ function buildSettings(prompt: string, type: GameType): Record<string, unknown> 
       settings.fallSpeed = /fast|hard/.test(p) ? 2 : /slow|easy/.test(p) ? 1 : 1.4;
       settings.lives = /hard|one life/.test(p) ? 2 : /easy/.test(p) ? 5 : 3;
       break;
+    case "cross":
+      settings.lanes = /hard|busy|chaos/.test(p) ? 9 : /easy/.test(p) ? 5 : 7;
+      settings.carSpeed = /fast|hard/.test(p) ? 2 : /slow|easy/.test(p) ? 1 : 1.4;
+      break;
+    case "stack":
+      settings.blockSpeed = /fast|hard/.test(p) ? 2.2 : /slow|easy/.test(p) ? 1 : 1.6;
+      settings.startWidth = /wide|easy/.test(p) ? 120 : /narrow|hard/.test(p) ? 70 : 100;
+      break;
+    case "simon":
+      settings.speed = /fast|hard/.test(p) ? 500 : /slow|easy/.test(p) ? 900 : 650;
+      settings.colors = 4;
+      break;
+    case "reaction":
+      settings.rounds = /long|marathon/.test(p) ? 8 : /quick|short/.test(p) ? 3 : 5;
+      settings.minDelay = /hard/.test(p) ? 1200 : 800;
+      break;
   }
 
   return settings;
@@ -159,6 +183,10 @@ function parsePrompt(prompt: string): ParsedPrompt {
     dodge: "Dodge falling hazards and survive.",
     slide: "Swipe tiles and merge to reach 2048.",
     catch: "Catch fruit in your basket — avoid bombs!",
+    cross: "Cross busy roads and rivers to reach the top.",
+    stack: "Drop blocks perfectly to build the tallest tower.",
+    simon: "Watch the pattern and repeat the sequence.",
+    reaction: "Wait for green, then tap as fast as you can!",
   };
 
   return {
@@ -214,5 +242,9 @@ export function getExamplePrompts(): string[] {
     "A dodge game where you avoid falling meteor showers",
     "A 2048 slide puzzle with merge tiles",
     "A fruit catch game with a basket and bomb hazards",
+    "A frogger game where you cross busy traffic lanes",
+    "A stack tower game where you align falling blocks",
+    "A simon says memory sequence game with colors",
+    "A reaction time test — tap when the screen turns green",
   ];
 }

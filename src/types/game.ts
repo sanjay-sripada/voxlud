@@ -11,7 +11,11 @@ export type GameType =
   | "whack"
   | "dodge"
   | "slide"
-  | "catch";
+  | "catch"
+  | "cross"
+  | "stack"
+  | "simon"
+  | "reaction";
 
 export type GameMode = "solo" | "local-multiplayer" | "online";
 

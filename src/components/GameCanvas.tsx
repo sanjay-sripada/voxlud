@@ -111,6 +111,18 @@ export default function GameCanvas({
         case "catch":
           initCatch();
           break;
+        case "cross":
+          initCross();
+          break;
+        case "stack":
+          initStack();
+          break;
+        case "simon":
+          initSimon();
+          break;
+        case "reaction":
+          initReaction();
+          break;
       }
     };
 
@@ -1738,6 +1750,490 @@ export default function GameCanvas({
       ctx.fillText("Catch fruit, avoid bombs!", 16, canvas.height - 16);
     }
 
+    // ─── CROSS (Frogger) ───
+    function initCross() {
+      const cols = 7;
+      const rows = 9;
+      const cellW = canvas.width / cols;
+      const cellH = (canvas.height - 50) / rows;
+      const trafficRows = [1, 3, 5, 7];
+      const carSpeed = ((settings.carSpeed as number) || 1.4) * 2;
+      stateRef.current = {
+        cols,
+        rows,
+        cellW,
+        cellH,
+        offsetY: 30,
+        player: { c: Math.floor(cols / 2), r: rows - 1 },
+        cars: trafficRows.flatMap((row, laneIdx) =>
+          [0, 1, 2].map((i) => ({
+            row,
+            x: (i * canvas.width) / 3 + Math.random() * 30,
+            w: cellW * 1.4,
+            speed: (laneIdx % 2 === 0 ? 1 : -1) * carSpeed * (0.8 + Math.random() * 0.4),
+          }))
+        ),
+        moveCooldown: 0,
+      };
+    }
+
+    function tryMoveCross(dc: number, dr: number) {
+      const s = stateRef.current as {
+        cols: number;
+        rows: number;
+        player: { c: number; r: number };
+        moveCooldown: number;
+      };
+      if (s.moveCooldown > 0) return;
+      const nc = Math.max(0, Math.min(s.cols - 1, s.player.c + dc));
+      const nr = Math.max(0, Math.min(s.rows - 1, s.player.r + dr));
+      if (nc === s.player.c && nr === s.player.r) return;
+      s.player.c = nc;
+      s.player.r = nr;
+      s.moveCooldown = 180;
+      if (s.player.r === 0) {
+        score += 100;
+        onScoreChange?.(score);
+        s.player.r = s.rows - 1;
+        s.player.c = Math.floor(s.cols / 2);
+      }
+    }
+
+    function updateCross() {
+      const s = stateRef.current as {
+        cols: number;
+        rows: number;
+        player: { c: number; r: number };
+        cars: { row: number; x: number; w: number; speed: number }[];
+        moveCooldown: number;
+        cellW: number;
+        cellH: number;
+        offsetY: number;
+      };
+      if (s.moveCooldown > 0) s.moveCooldown -= 16;
+
+      const keys = keysRef.current;
+      if (keys.has("arrowup") || keys.has("w")) tryMoveCross(0, -1);
+      if (keys.has("arrowdown") || keys.has("s")) tryMoveCross(0, 1);
+      if (keys.has("arrowleft") || keys.has("a")) tryMoveCross(-1, 0);
+      if (keys.has("arrowright") || keys.has("d")) tryMoveCross(1, 0);
+      keysRef.current.delete("arrowup");
+      keysRef.current.delete("w");
+      keysRef.current.delete("arrowdown");
+      keysRef.current.delete("s");
+      keysRef.current.delete("arrowleft");
+      keysRef.current.delete("a");
+      keysRef.current.delete("arrowright");
+      keysRef.current.delete("d");
+
+      if (touchRef.current.pendingDir) {
+        const d = touchRef.current.pendingDir;
+        if (Math.abs(d.x) > Math.abs(d.y)) tryMoveCross(d.x > 0 ? 1 : -1, 0);
+        else tryMoveCross(0, d.y > 0 ? 1 : -1);
+        touchRef.current.pendingDir = null;
+      }
+
+      s.cars.forEach((car) => {
+        car.x += car.speed;
+        if (car.speed > 0 && car.x > canvas.width + car.w) car.x = -car.w;
+        if (car.speed < 0 && car.x < -car.w) car.x = canvas.width + car.w;
+      });
+
+      const px = s.player.c * s.cellW + s.cellW / 2;
+      const py = s.offsetY + s.player.r * s.cellH + s.cellH / 2;
+      for (const car of s.cars) {
+        if (car.row !== s.player.r) continue;
+        if (px + s.cellW * 0.3 > car.x && px - s.cellW * 0.3 < car.x + car.w) {
+          endGame(score);
+          return;
+        }
+      }
+    }
+
+    function drawCross() {
+      const s = stateRef.current as {
+        cols: number;
+        rows: number;
+        cellW: number;
+        cellH: number;
+        offsetY: number;
+        player: { c: number; r: number };
+        cars: { row: number; x: number; w: number }[];
+      };
+      ctx.fillStyle = theme.background;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      for (let r = 0; r < s.rows; r++) {
+        const y = s.offsetY + r * s.cellH;
+        ctx.fillStyle = r === 0 ? theme.accent + "33" : r % 2 === 0 ? theme.secondary + "22" : theme.secondary + "11";
+        ctx.fillRect(0, y, canvas.width, s.cellH);
+      }
+
+      ctx.fillStyle = theme.primary;
+      s.cars.forEach((car) => {
+        const y = s.offsetY + car.row * s.cellH + s.cellH * 0.2;
+        ctx.fillRect(car.x, y, car.w, s.cellH * 0.6);
+      });
+
+      const px = s.player.c * s.cellW + s.cellW / 2;
+      const py = s.offsetY + s.player.r * s.cellH + s.cellH / 2;
+      ctx.fillStyle = theme.accent;
+      ctx.beginPath();
+      ctx.arc(px, py, s.cellW * 0.32, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#fff";
+      ctx.font = "16px sans-serif";
+      ctx.textAlign = "left";
+      ctx.fillText(`Score: ${score}`, 16, 22);
+      ctx.font = "12px sans-serif";
+      ctx.fillStyle = "#ffffff88";
+      ctx.fillText("Cross to the top!", 16, canvas.height - 12);
+    }
+
+    // ─── STACK ───
+    function initStack() {
+      const w = (settings.startWidth as number) || 100;
+      const baseY = canvas.height - 48;
+      stateRef.current = {
+        blocks: [{ x: canvas.width / 2 - w / 2, w, y: baseY }],
+        current: { x: 20, w, dir: 1, y: baseY - 28 },
+        speed: (settings.blockSpeed as number) || 1.6,
+      };
+    }
+
+    function dropStack() {
+      const s = stateRef.current as {
+        blocks: { x: number; w: number; y: number }[];
+        current: { x: number; w: number; dir: number; y: number };
+        speed: number;
+      };
+      const prev = s.blocks[s.blocks.length - 1];
+      const cur = s.current;
+      const left = Math.max(prev.x, cur.x);
+      const right = Math.min(prev.x + prev.w, cur.x + cur.w);
+      const overlap = right - left;
+      if (overlap <= 8) {
+        endGame(score);
+        return;
+      }
+      const perfect = Math.abs(prev.x - cur.x) < 6;
+      score += perfect ? 25 : 10;
+      onScoreChange?.(score);
+      s.blocks.push({ x: left, w: overlap, y: cur.y });
+      const lift = 22;
+      s.blocks.forEach((b) => (b.y -= lift));
+      if (s.blocks.length > 12) {
+        s.blocks.shift();
+        s.blocks.forEach((b) => (b.y += lift));
+      }
+      s.current = {
+        x: 20,
+        w: overlap,
+        dir: 1,
+        y: s.blocks[s.blocks.length - 1].y - 28,
+      };
+    }
+
+    function updateStack() {
+      const s = stateRef.current as {
+        current: { x: number; w: number; dir: number; y: number };
+        speed: number;
+      };
+      const cur = s.current;
+      cur.x += cur.dir * s.speed * 4;
+      if (cur.x <= 10) {
+        cur.x = 10;
+        cur.dir = 1;
+      }
+      if (cur.x + cur.w >= canvas.width - 10) {
+        cur.x = canvas.width - 10 - cur.w;
+        cur.dir = -1;
+      }
+
+      if (keysRef.current.has(" ") || touchRef.current.actionTap) {
+        dropStack();
+        keysRef.current.delete(" ");
+        touchRef.current.actionTap = false;
+      }
+    }
+
+    function drawStack() {
+      const s = stateRef.current as {
+        blocks: { x: number; w: number; y: number }[];
+        current: { x: number; w: number; y: number };
+      };
+      ctx.fillStyle = theme.background;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      s.blocks.forEach((b, i) => {
+        ctx.fillStyle = i === s.blocks.length - 1 ? theme.primary : theme.secondary + "cc";
+        ctx.fillRect(b.x, b.y, b.w, 20);
+      });
+      ctx.fillStyle = theme.accent;
+      ctx.fillRect(s.current.x, s.current.y, s.current.w, 20);
+
+      ctx.fillStyle = "#fff";
+      ctx.font = "16px sans-serif";
+      ctx.textAlign = "left";
+      ctx.fillText(`Score: ${score}  Height: ${s.blocks.length}`, 16, 24);
+      ctx.font = "12px sans-serif";
+      ctx.fillStyle = "#ffffff88";
+      ctx.fillText("Tap to drop the block", 16, canvas.height - 12);
+    }
+
+    // ─── SIMON ───
+    const SIMON_COLORS = ["#ef4444", "#22c55e", "#3b82f6", "#eab308"];
+
+    function initSimon() {
+      stateRef.current = {
+        sequence: [] as number[],
+        inputIdx: 0,
+        phase: "show" as "show" | "input",
+        showIdx: 0,
+        flashTimer: 0,
+        flashOn: false,
+        flashColor: -1,
+        speed: (settings.speed as number) || 650,
+        padding: 40,
+      };
+      nextSimonRound();
+    }
+
+    function nextSimonRound() {
+      const s = stateRef.current as {
+        sequence: number[];
+        inputIdx: number;
+        phase: "show" | "input";
+        showIdx: number;
+        flashTimer: number;
+        flashOn: boolean;
+        flashColor: number;
+        speed: number;
+      };
+      s.sequence.push(Math.floor(Math.random() * 4));
+      s.inputIdx = 0;
+      s.phase = "show";
+      s.showIdx = 0;
+      s.flashTimer = s.speed;
+      s.flashOn = false;
+      s.flashColor = -1;
+    }
+
+    function updateSimon() {
+      const s = stateRef.current as {
+        sequence: number[];
+        inputIdx: number;
+        phase: "show" | "input";
+        showIdx: number;
+        flashTimer: number;
+        flashOn: boolean;
+        flashColor: number;
+        speed: number;
+      };
+
+      if (s.phase === "show") {
+        s.flashTimer -= 16;
+        if (s.flashTimer <= 0) {
+          if (!s.flashOn) {
+            s.flashOn = true;
+            s.flashColor = s.sequence[s.showIdx];
+            s.flashTimer = s.speed * 0.6;
+          } else {
+            s.flashOn = false;
+            s.flashColor = -1;
+            s.showIdx++;
+            if (s.showIdx >= s.sequence.length) {
+              s.phase = "input";
+            } else {
+              s.flashTimer = s.speed * 0.4;
+            }
+          }
+        }
+      }
+    }
+
+    function drawSimon() {
+      const s = stateRef.current as {
+        phase: "show" | "input";
+        flashOn: boolean;
+        flashColor: number;
+        sequence: number[];
+        padding: number;
+      };
+      ctx.fillStyle = theme.background;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const pad = s.padding;
+      const w = (canvas.width - pad * 3) / 2;
+      const h = (canvas.height - pad * 3 - 40) / 2;
+      const positions = [
+        [pad, pad],
+        [pad * 2 + w, pad],
+        [pad, pad * 2 + h],
+        [pad * 2 + w, pad * 2 + h],
+      ];
+
+      positions.forEach(([x, y], i) => {
+        const lit = s.flashOn && s.flashColor === i;
+        ctx.fillStyle = lit ? SIMON_COLORS[i] : SIMON_COLORS[i] + "55";
+        ctx.beginPath();
+        ctx.roundRect(x, y, w, h, 16);
+        ctx.fill();
+      });
+
+      ctx.fillStyle = "#fff";
+      ctx.font = "16px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(`Round ${s.sequence.length}`, canvas.width / 2, canvas.height - 24);
+      ctx.font = "12px sans-serif";
+      ctx.fillStyle = "#ffffff88";
+      ctx.fillText(
+        s.phase === "show" ? "Watch the sequence..." : "Repeat the pattern!",
+        canvas.width / 2,
+        canvas.height - 8
+      );
+    }
+
+    function handleSimonTap(mx: number, my: number) {
+      const s = stateRef.current as {
+        phase: "show" | "input";
+        sequence: number[];
+        inputIdx: number;
+        padding: number;
+      };
+      if (s.phase !== "input") return;
+
+      const pad = s.padding;
+      const w = (canvas.width - pad * 3) / 2;
+      const h = (canvas.height - pad * 3 - 40) / 2;
+      const regions = [
+        { x: pad, y: pad },
+        { x: pad * 2 + w, y: pad },
+        { x: pad, y: pad * 2 + h },
+        { x: pad * 2 + w, y: pad * 2 + h },
+      ];
+
+      let picked = -1;
+      regions.forEach((r, i) => {
+        if (mx >= r.x && mx <= r.x + w && my >= r.y && my <= r.y + h) picked = i;
+      });
+      if (picked < 0) return;
+
+      if (picked !== s.sequence[s.inputIdx]) {
+        endGame(score);
+        return;
+      }
+      s.inputIdx++;
+      score += 5;
+      onScoreChange?.(score);
+      if (s.inputIdx >= s.sequence.length) nextSimonRound();
+    }
+
+    // ─── REACTION ───
+    function initReaction() {
+      const rounds = (settings.rounds as number) || 5;
+      stateRef.current = {
+        phase: "wait" as "wait" | "go" | "early",
+        timer: 0,
+        waitTime: 0,
+        round: 0,
+        maxRounds: rounds,
+        minDelay: (settings.minDelay as number) || 800,
+        lastMs: 0,
+      };
+      startReactionWait();
+    }
+
+    function startReactionWait() {
+      const s = stateRef.current as {
+        phase: "wait" | "go" | "early";
+        timer: number;
+        waitTime: number;
+        round: number;
+        maxRounds: number;
+        minDelay: number;
+      };
+      if (s.round >= s.maxRounds) {
+        endGame(score);
+        return;
+      }
+      s.phase = "wait";
+      s.waitTime = s.minDelay + Math.random() * 2000;
+      s.timer = 0;
+    }
+
+    function updateReaction() {
+      const s = stateRef.current as {
+        phase: "wait" | "go" | "early";
+        timer: number;
+        waitTime: number;
+        round: number;
+        lastMs: number;
+      };
+      if (s.phase === "wait") {
+        s.timer += 16;
+        if (s.timer >= s.waitTime) s.phase = "go";
+      } else       if (s.phase === "go") {
+        s.lastMs += 16;
+      }
+
+      if (keysRef.current.has(" ")) {
+        handleReactionTap();
+        keysRef.current.delete(" ");
+      }
+    }
+
+    function handleReactionTap() {
+      const s = stateRef.current as {
+        phase: "wait" | "go" | "early";
+        round: number;
+        lastMs: number;
+        maxRounds: number;
+      };
+      if (s.phase === "wait") {
+        endGame(score);
+        return;
+      }
+      if (s.phase === "go") {
+        const points = Math.max(10, 500 - s.lastMs);
+        score += points;
+        onScoreChange?.(score);
+        s.round++;
+        startReactionWait();
+      }
+    }
+
+    function drawReaction() {
+      const s = stateRef.current as {
+        phase: "wait" | "go" | "early";
+        round: number;
+        maxRounds: number;
+        lastMs: number;
+      };
+      const colors = {
+        wait: "#ef4444",
+        go: "#22c55e",
+        early: "#ef4444",
+      };
+      ctx.fillStyle = colors[s.phase];
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = "#fff";
+      ctx.font = "bold 28px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      if (s.phase === "wait") ctx.fillText("Wait...", canvas.width / 2, canvas.height / 2 - 20);
+      if (s.phase === "go") ctx.fillText("TAP!", canvas.width / 2, canvas.height / 2 - 20);
+
+      ctx.font = "16px sans-serif";
+      ctx.fillText(`Score: ${score}`, canvas.width / 2, canvas.height / 2 + 30);
+      ctx.font = "13px sans-serif";
+      ctx.fillStyle = "#ffffffcc";
+      ctx.fillText(`Round ${Math.min(s.round + 1, s.maxRounds)} / ${s.maxRounds}`, canvas.width / 2, 40);
+      if (s.phase === "go") ctx.fillText(`${s.lastMs}ms`, canvas.width / 2, canvas.height / 2 + 60);
+    }
+
     function handleMemoryTap(mx: number, my: number) {
       const s = stateRef.current as {
         cols: number;
@@ -1786,6 +2282,16 @@ export default function GameCanvas({
 
       if (config.type === "whack") {
         handleWhackTap(mx, my);
+        return;
+      }
+
+      if (config.type === "simon") {
+        handleSimonTap(mx, my);
+        return;
+      }
+
+      if (config.type === "reaction") {
+        handleReactionTap();
         return;
       }
 
@@ -1847,13 +2353,19 @@ export default function GameCanvas({
         return;
       }
 
-      if (config.type === "memory" || config.type === "whack") {
+      if (config.type === "memory" || config.type === "whack" || config.type === "simon" || config.type === "reaction") {
         handlePointerInput(touch.clientX, touch.clientY);
         e.preventDefault();
         return;
       }
 
-      if (config.type === "snake" || config.type === "runner" || config.type === "tetris" || config.type === "slide") {
+      if (config.type === "stack") {
+        touchRef.current.actionTap = true;
+        e.preventDefault();
+        return;
+      }
+
+      if (config.type === "snake" || config.type === "runner" || config.type === "tetris" || config.type === "slide" || config.type === "cross") {
         swipeStart = { x, y };
         e.preventDefault();
         return;
@@ -1896,7 +2408,7 @@ export default function GameCanvas({
       } else if (config.type === "breakout" || config.type === "shooter" || config.type === "dodge" || config.type === "catch") {
         touchRef.current.pointerX = x;
         e.preventDefault();
-      } else if (config.type === "snake" || config.type === "runner" || config.type === "tetris" || config.type === "slide") {
+      } else if (config.type === "snake" || config.type === "runner" || config.type === "tetris" || config.type === "slide" || config.type === "cross") {
         e.preventDefault();
       }
     }
@@ -1913,7 +2425,7 @@ export default function GameCanvas({
         touchRef.current.actionTap = true;
       }
 
-      if ((config.type === "snake" || config.type === "tetris" || config.type === "slide") && swipeStart && !gameOver) {
+      if ((config.type === "snake" || config.type === "tetris" || config.type === "slide" || config.type === "cross") && swipeStart && !gameOver) {
         const { x, y } = canvasCoords(touch.clientX, touch.clientY);
         const dx = x - swipeStart.x;
         const dy = y - swipeStart.y;
@@ -2002,6 +2514,18 @@ export default function GameCanvas({
         case "catch":
           drawCatch();
           break;
+        case "cross":
+          drawCross();
+          break;
+        case "stack":
+          drawStack();
+          break;
+        case "simon":
+          drawSimon();
+          break;
+        case "reaction":
+          drawReaction();
+          break;
       }
     }
 
@@ -2076,6 +2600,22 @@ export default function GameCanvas({
         case "catch":
           updateCatch();
           drawCatch();
+          break;
+        case "cross":
+          updateCross();
+          drawCross();
+          break;
+        case "stack":
+          updateStack();
+          drawStack();
+          break;
+        case "simon":
+          updateSimon();
+          drawSimon();
+          break;
+        case "reaction":
+          updateReaction();
+          drawReaction();
           break;
       }
 

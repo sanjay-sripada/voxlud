@@ -85,6 +85,30 @@ const CONTROLS: Record<string, string[]> = {
     "Avoid bombs",
     "Don't miss too many fruits",
   ],
+  cross: [
+    "Arrow keys or swipe to move",
+    "Cross lanes of traffic",
+    "Reach the top to score",
+    "Don't get hit by cars!",
+  ],
+  stack: [
+    "Tap or Space to drop the block",
+    "Align with the block below",
+    "Perfect stacks score bonus",
+    "Miss alignment = game over",
+  ],
+  simon: [
+    "Watch the color sequence",
+    "Tap the same colors in order",
+    "Each round adds one more step",
+    "One wrong tap ends the game",
+  ],
+  reaction: [
+    "Wait for the screen to turn green",
+    "Tap as fast as possible",
+    "Don't tap while it's red!",
+    "Lower ms = higher score",
+  ],
 };
 
 export default function PlayPageClient() {

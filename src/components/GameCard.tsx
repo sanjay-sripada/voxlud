@@ -15,6 +15,10 @@ const TYPE_LABELS: Record<string, string> = {
   dodge: "Dodge",
   slide: "2048",
   catch: "Catch",
+  cross: "Cross",
+  stack: "Stack",
+  simon: "Simon",
+  reaction: "Reflex",
 };
 
 const MODE_LABELS: Record<string, string> = {
@@ -55,6 +59,10 @@ export default function GameCard({ game }: GameCardProps) {
           {config.type === "dodge" && "💨"}
           {config.type === "slide" && "🔢"}
           {config.type === "catch" && "🧺"}
+          {config.type === "cross" && "🐸"}
+          {config.type === "stack" && "🗼"}
+          {config.type === "simon" && "🎨"}
+          {config.type === "reaction" && "⚡"}
         </div>
       </div>
       <div className="p-4">
