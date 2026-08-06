@@ -283,7 +283,7 @@ export default function PlayPageClient() {
       <div className={`flex flex-1 flex-col ${mobilePlaying ? "min-h-0 p-2" : ""}`}>
         {isNew && !mobilePlaying && (
           <div className="mb-3 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-2 text-sm text-emerald-300">
-            Your game is ready! Play it below, then share the link with friends.
+            Your game is published! Play it below, then share the link with friends.
           </div>
         )}
 

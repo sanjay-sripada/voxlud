@@ -1,6 +1,6 @@
 import { nanoid } from "nanoid";
 import { createClient } from "@/lib/supabase/server";
-import type { Game, GameConfig } from "@/types/game";
+import type { ChatMessage, Game, GameConfig } from "@/types/game";
 import type { Database } from "@/types/database";
 
 type GameRow = Database["public"]["Tables"]["games"]["Row"];
@@ -15,6 +15,8 @@ function rowToGame(row: GameRow): Game {
     plays: row.plays,
     likes: row.likes,
     featured: row.featured,
+    published: row.published,
+    chatHistory: (row.chat_history as Game["chatHistory"]) ?? [],
     createdAt: row.created_at,
   };
 }
@@ -24,6 +26,7 @@ export async function getAllGames(): Promise<Game[]> {
   const { data, error } = await supabase
     .from("games")
     .select("*")
+    .eq("published", true)
     .order("created_at", { ascending: false });
 
   if (error) throw new Error(error.message);
@@ -44,14 +47,17 @@ export async function getGamesByUserId(userId: string): Promise<Game[]> {
     .from("games")
     .select("*")
     .eq("user_id", userId)
+    .eq("published", true)
     .order("created_at", { ascending: false });
 
   if (error) throw new Error(error.message);
   return (data ?? []).map(rowToGame);
 }
 
-export async function saveGame(
-  game: Omit<Game, "id" | "plays" | "likes" | "createdAt">
+export async function publishGame(
+  game: Omit<Game, "id" | "plays" | "likes" | "createdAt" | "published"> & {
+    chatHistory?: ChatMessage[];
+  }
 ): Promise<Game> {
   const supabase = await createClient();
   const id = nanoid(10);
@@ -65,12 +71,21 @@ export async function saveGame(
       config: game.config,
       author: game.author,
       featured: game.featured,
+      published: true,
+      chat_history: game.chatHistory ?? [],
     })
     .select("*")
     .single();
 
   if (error) throw new Error(error.message);
   return rowToGame(data);
+}
+
+/** @deprecated Use publishGame */
+export async function saveGame(
+  game: Omit<Game, "id" | "plays" | "likes" | "createdAt" | "published">
+): Promise<Game> {
+  return publishGame(game);
 }
 
 export async function deleteGame(id: string, userId: string): Promise<boolean> {

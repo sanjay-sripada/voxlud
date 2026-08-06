@@ -12,9 +12,6 @@ export default function Navbar() {
           <span className="text-lg font-semibold tracking-tight text-white">Voxlud</span>
         </Link>
         <nav className="hidden items-center gap-8 md:flex">
-          <Link href="/create" className="text-sm text-zinc-400 transition hover:text-white">
-            Make a Game
-          </Link>
           <Link href="/explore" className="text-sm text-zinc-400 transition hover:text-white">
             Explore
           </Link>
@@ -22,7 +19,15 @@ export default function Navbar() {
             My Games
           </Link>
         </nav>
-        <AuthButtons />
+        <div className="flex items-center gap-2 sm:gap-3">
+          <Link
+            href="/create"
+            className="rounded-full bg-gradient-to-r from-indigo-500 to-pink-500 px-4 py-2 text-sm font-medium text-white transition hover:opacity-90 sm:px-5"
+          >
+            Create game
+          </Link>
+          <AuthButtons />
+        </div>
       </div>
     </header>
   );

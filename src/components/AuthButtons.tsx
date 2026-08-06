@@ -38,12 +38,6 @@ export default function AuthButtons() {
           )}
           <span className="max-w-[120px] truncate text-sm text-zinc-400">{name}</span>
         </div>
-        <Link
-          href="/create"
-          className="rounded-full bg-gradient-to-r from-indigo-500 to-pink-500 px-4 py-2 text-sm font-medium text-white transition hover:opacity-90 sm:px-5"
-        >
-          Make a game
-        </Link>
         <button
           onClick={() => signOut().then(() => window.location.assign("/"))}
           className="rounded-full border border-white/10 px-3 py-2 text-sm text-zinc-400 transition hover:border-white/20 hover:text-white"

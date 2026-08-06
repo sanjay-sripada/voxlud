@@ -65,7 +65,18 @@ export default function GameCanvas({
     window.addEventListener("resize", resize);
 
     const { theme, settings, mode } = config;
+    const playerEmoji =
+      (config.emoji || (settings.playerEmoji as string | undefined))?.trim() || "";
     const isMulti = mode === "local-multiplayer";
+
+    const drawPlayerEmoji = (x: number, y: number, size = 28) => {
+      if (!playerEmoji) return false;
+      ctx.font = `${size}px sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(playerEmoji, x, y);
+      return true;
+    };
 
     let score = 0;
     let gameOver = false;
@@ -572,9 +583,11 @@ export default function GameCanvas({
       ctx.fillRect(0, 0, canvas.width, 60);
 
       ctx.fillStyle = theme.primary;
-      ctx.beginPath();
-      ctx.arc(80, s.player.y, s.player.r, 0, Math.PI * 2);
-      ctx.fill();
+      if (!drawPlayerEmoji(80, s.player.y, s.player.r * 1.6)) {
+        ctx.beginPath();
+        ctx.arc(80, s.player.y, s.player.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
 
       ctx.fillStyle = theme.accent;
       s.obstacles.forEach((o) => ctx.fillRect(o.x, o.y, o.w, o.h));
@@ -585,7 +598,11 @@ export default function GameCanvas({
       ctx.fillText(`Score: ${score}`, 16, 30);
       ctx.font = "12px sans-serif";
       ctx.fillStyle = "#ffffff88";
-      ctx.fillText(s.gravityFlip ? "Tap/Space to flip gravity" : "Space/Up to jump", 16, canvas.height - 16);
+      ctx.fillText(
+        s.gravityFlip ? "Tap/Space to flip gravity · survive to score" : "Space/Up to jump · survive to score",
+        16,
+        canvas.height - 16
+      );
     }
 
     // ─── CLICKER ───
@@ -1447,8 +1464,10 @@ export default function GameCanvas({
       });
 
       const py = canvas.height - 40;
-      ctx.fillStyle = theme.primary;
-      ctx.fillRect(s.player.x - s.player.w / 2, py, s.player.w, s.player.h);
+      if (!drawPlayerEmoji(s.player.x, py + s.player.h / 2, 28)) {
+        ctx.fillStyle = theme.primary;
+        ctx.fillRect(s.player.x - s.player.w / 2, py, s.player.w, s.player.h);
+      }
 
       ctx.fillStyle = "#fff";
       ctx.font = "16px sans-serif";
@@ -1791,6 +1810,10 @@ export default function GameCanvas({
       s.player.c = nc;
       s.player.r = nr;
       s.moveCooldown = 180;
+      if (dr < 0) {
+        score += 10;
+        onScoreChange?.(score);
+      }
       if (s.player.r === 0) {
         score += 100;
         onScoreChange?.(score);
@@ -1877,10 +1900,12 @@ export default function GameCanvas({
 
       const px = s.player.c * s.cellW + s.cellW / 2;
       const py = s.offsetY + s.player.r * s.cellH + s.cellH / 2;
-      ctx.fillStyle = theme.accent;
-      ctx.beginPath();
-      ctx.arc(px, py, s.cellW * 0.32, 0, Math.PI * 2);
-      ctx.fill();
+      if (!drawPlayerEmoji(px, py, s.cellW * 0.55)) {
+        ctx.fillStyle = theme.accent;
+        ctx.beginPath();
+        ctx.arc(px, py, s.cellW * 0.32, 0, Math.PI * 2);
+        ctx.fill();
+      }
 
       ctx.fillStyle = "#fff";
       ctx.font = "16px sans-serif";
@@ -1888,7 +1913,7 @@ export default function GameCanvas({
       ctx.fillText(`Score: ${score}`, 16, 22);
       ctx.font = "12px sans-serif";
       ctx.fillStyle = "#ffffff88";
-      ctx.fillText("Cross to the top!", 16, canvas.height - 12);
+      ctx.fillText("+10 per lane · +100 at top", 16, canvas.height - 12);
     }
 
     // ─── STACK ───

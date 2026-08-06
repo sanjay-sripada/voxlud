@@ -1,4 +1,5 @@
 import type { GameConfig, GameType, GameMode } from "@/types/game";
+import { ensurePlayerEmoji } from "@/lib/infer-player-emoji";
 
 const THEMES = [
   { primary: "#6366f1", secondary: "#818cf8", background: "#0f0f23", accent: "#f472b6" },
@@ -30,10 +31,11 @@ function detectGameType(prompt: string): GameType {
   if (/simon|sequence|repeat|pattern|memory.?chain/.test(p)) return "simon";
   if (/reaction|reflex|quick.?tap|speed.?test/.test(p)) return "reaction";
   if (/stack.?tower|stacking|align.?block|tower.?stack/.test(p)) return "stack";
-  if (/cross|frogger|crossy|road.?cross|traffic/.test(p)) return "cross";
+  if (/cross|frogger|crossy|road.?cross|traffic|highway/.test(p)) return "cross";
   if (/whack|mole|hammer|bash/.test(p)) return "whack";
   if (/2048|slide.?puzzle|number.?merge|merge.?tile/.test(p)) return "slide";
   if (/catch|basket|fruit.?catch|collect.?fall/.test(p)) return "catch";
+  if (/car|racing|race|driv|vehicle|automobile|🏎|🚗|🚙/.test(p)) return "runner";
   if (/dodge|avoid|sidestep|dodgeball/.test(p)) return "dodge";
   if (/run|runner|jump|gravity|endless/.test(p)) return "runner";
   if (/puzzle|match|connect|block/.test(p)) return "snake";
@@ -102,6 +104,9 @@ function buildSettings(prompt: string, type: GameType): Record<string, unknown> 
         : /neon|cyber|retro/.test(p)
           ? "neon"
           : "default";
+      if (/car|racing|vehicle|🏎|🚗|🚙/.test(p)) {
+        settings.playerEmoji = "🚗";
+      }
       break;
     case "clicker":
       settings.upgrades = /upgrade|tycoon|cafe|shop/.test(p);
@@ -145,6 +150,7 @@ function buildSettings(prompt: string, type: GameType): Record<string, unknown> 
     case "cross":
       settings.lanes = /hard|busy|chaos/.test(p) ? 9 : /easy/.test(p) ? 5 : 7;
       settings.carSpeed = /fast|hard/.test(p) ? 2 : /slow|easy/.test(p) ? 1 : 1.4;
+      if (/car|🚗|🏎/.test(p)) settings.playerEmoji = "🚗";
       break;
     case "stack":
       settings.blockSpeed = /fast|hard/.test(p) ? 2.2 : /slow|easy/.test(p) ? 1 : 1.6;
@@ -212,7 +218,7 @@ export function generateGameFromPrompt(prompt: string): GameConfig {
   const parsed = parsePrompt(prompt);
   const theme = THEMES[parsed.themeIndex];
 
-  return {
+  const base: GameConfig = {
     type: parsed.type,
     mode: parsed.mode,
     title: parsed.title,
@@ -220,6 +226,8 @@ export function generateGameFromPrompt(prompt: string): GameConfig {
     theme,
     settings: parsed.settings,
   };
+
+  return ensurePlayerEmoji(base, prompt);
 }
 
 export function getGenerationDelay(): number {

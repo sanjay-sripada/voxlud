@@ -1,0 +1,45 @@
+export const GAME_TYPE_LABELS: Record<string, string> = {
+  pong: "Pong",
+  snake: "Snake",
+  breakout: "Arcade",
+  runner: "Runner",
+  clicker: "Clicker",
+  flappy: "Flappy",
+  shooter: "Shooter",
+  tetris: "Tetris",
+  memory: "Memory",
+  whack: "Whack",
+  dodge: "Dodge",
+  slide: "2048",
+  catch: "Catch",
+  cross: "Cross",
+  stack: "Stack",
+  simon: "Simon",
+  reaction: "Reflex",
+};
+
+export const GAME_MODE_LABELS: Record<string, string> = {
+  solo: "Solo",
+  "local-multiplayer": "Local MP",
+  online: "Online",
+};
+
+export const GAME_TYPE_EMOJI: Record<string, string> = {
+  pong: "🏓",
+  snake: "🐍",
+  breakout: "🧱",
+  runner: "🏃",
+  clicker: "☕",
+  flappy: "🐦",
+  shooter: "🚀",
+  tetris: "🧩",
+  memory: "🃏",
+  whack: "🔨",
+  dodge: "💨",
+  slide: "🔢",
+  catch: "🧺",
+  cross: "🐸",
+  stack: "🗼",
+  simon: "🎨",
+  reaction: "⚡",
+};
