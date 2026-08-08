@@ -301,7 +301,7 @@ export default function GamePreviewPanel({
             disabled={saving || !config.title.trim()}
             className="flex-1 rounded-xl bg-gradient-to-r from-indigo-500 to-pink-500 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            {saving ? "Publishing..." : publishLabel}
+            {saving ? (publishLabel.startsWith("Save") ? "Saving..." : "Publishing...") : publishLabel}
           </button>
         </div>
       </div>

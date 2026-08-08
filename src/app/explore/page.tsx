@@ -1,4 +1,5 @@
-import GameCard from "@/components/GameCard";
+import { Suspense } from "react";
+import ExplorePageClient from "@/app/explore/ExplorePageClient";
 import { getAllGames } from "@/lib/games";
 import { isSupabaseConfigured } from "@/lib/env";
 
@@ -25,35 +26,31 @@ export default async function ExplorePage() {
         : "Could not load games. Check your Supabase connection and run the migration.";
   }
 
-  return (
-    <div className="mx-auto max-w-6xl px-6 py-16">
-      <div className="mb-10">
-        <p className="mb-2 text-sm font-medium uppercase tracking-wider text-pink-400">
-          Discover
-        </p>
-        <h1 className="mb-2 text-4xl font-bold">Explore games</h1>
-        <p className="text-zinc-400">
-          Browse AI-generated games from the community. Play instantly in your browser.
-        </p>
-      </div>
-
-      {error && (
-        <div className="mb-6 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+  if (error) {
+    return (
+      <div className="mx-auto max-w-6xl px-6 py-16">
+        <div className="mb-10">
+          <p className="mb-2 text-sm font-medium uppercase tracking-wider text-pink-400">
+            Discover
+          </p>
+          <h1 className="mb-2 text-4xl font-bold">Explore games</h1>
+        </div>
+        <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
           {error}
         </div>
-      )}
+      </div>
+    );
+  }
 
-      {games.length === 0 && !error ? (
-        <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-12 text-center">
-          <p className="text-zinc-400">No games yet. Be the first to create one!</p>
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-indigo-500/30 border-t-indigo-500" />
         </div>
-      ) : (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {games.map((game) => (
-            <GameCard key={game.id} game={game} />
-          ))}
-        </div>
-      )}
-    </div>
+      }
+    >
+      <ExplorePageClient games={games} />
+    </Suspense>
   );
 }

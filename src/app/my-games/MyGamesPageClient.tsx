@@ -97,12 +97,20 @@ export default function MyGamesPageClient() {
           {games.map((game) => (
             <div key={game.id} className="group relative">
               <GameCard game={game} />
-              <button
-                onClick={() => handleDelete(game.id)}
-                className="absolute top-3 right-3 rounded-lg bg-black/60 px-2 py-1 text-xs text-red-400 opacity-0 transition group-hover:opacity-100 hover:bg-black/80"
-              >
-                Delete
-              </button>
+              <div className="absolute top-3 right-3 flex gap-1 opacity-0 transition group-hover:opacity-100">
+                <Link
+                  href={`/create?edit=${game.id}`}
+                  className="rounded-lg bg-black/60 px-2 py-1 text-xs text-indigo-300 hover:bg-black/80"
+                >
+                  Edit
+                </Link>
+                <button
+                  onClick={() => handleDelete(game.id)}
+                  className="rounded-lg bg-black/60 px-2 py-1 text-xs text-red-400 hover:bg-black/80"
+                >
+                  Delete
+                </button>
+              </div>
             </div>
           ))}
         </div>

@@ -20,12 +20,17 @@ export default function Navbar() {
           </Link>
         </nav>
         <div className="flex items-center gap-2 sm:gap-3">
-          <Link
-            href="/create"
-            className="rounded-full bg-gradient-to-r from-indigo-500 to-pink-500 px-4 py-2 text-sm font-medium text-white transition hover:opacity-90 sm:px-5"
-          >
-            Create game
-          </Link>
+          <div className="flex flex-col items-center gap-0.5">
+            <Link
+              href="/create"
+              className="rounded-full bg-gradient-to-r from-indigo-500 to-pink-500 px-4 py-2 text-sm font-medium text-white transition hover:opacity-90 sm:px-5"
+            >
+              Create game
+            </Link>
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-amber-400/90">
+              Beta
+            </span>
+          </div>
           <AuthButtons />
         </div>
       </div>

@@ -54,6 +54,45 @@ export async function getGamesByUserId(userId: string): Promise<Game[]> {
   return (data ?? []).map(rowToGame);
 }
 
+export async function getGameByIdForUser(id: string, userId: string): Promise<Game | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("games")
+    .select("*")
+    .eq("id", id)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  return data ? rowToGame(data) : null;
+}
+
+export async function updateGame(
+  id: string,
+  userId: string,
+  update: {
+    prompt: string;
+    config: GameConfig;
+    chatHistory?: ChatMessage[];
+  }
+): Promise<Game> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("games")
+    .update({
+      prompt: update.prompt,
+      config: update.config,
+      chat_history: update.chatHistory ?? [],
+    })
+    .eq("id", id)
+    .eq("user_id", userId)
+    .select("*")
+    .single();
+
+  if (error) throw new Error(error.message);
+  return rowToGame(data);
+}
+
 export async function publishGame(
   game: Omit<Game, "id" | "plays" | "likes" | "createdAt" | "published"> & {
     chatHistory?: ChatMessage[];

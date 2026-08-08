@@ -1,4 +1,6 @@
-export const GAME_TYPE_LABELS: Record<string, string> = {
+import type { GameMode, GameType } from "@/types/game";
+
+export const TYPE_LABELS: Record<GameType, string> = {
   pong: "Pong",
   snake: "Snake",
   breakout: "Arcade",
@@ -18,13 +20,19 @@ export const GAME_TYPE_LABELS: Record<string, string> = {
   reaction: "Reflex",
 };
 
-export const GAME_MODE_LABELS: Record<string, string> = {
+export const MODE_LABELS: Record<GameMode, string> = {
   solo: "Solo",
   "local-multiplayer": "Local MP",
   online: "Online",
 };
 
-export const GAME_TYPE_EMOJI: Record<string, string> = {
+/** @deprecated Use TYPE_LABELS */
+export const GAME_TYPE_LABELS = TYPE_LABELS;
+
+/** @deprecated Use MODE_LABELS */
+export const GAME_MODE_LABELS = MODE_LABELS;
+
+export const GAME_TYPE_EMOJI: Record<GameType, string> = {
   pong: "🏓",
   snake: "🐍",
   breakout: "🧱",

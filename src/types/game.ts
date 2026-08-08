@@ -82,6 +82,12 @@ export interface PublishGameRequest {
   chatHistory?: ChatMessage[];
 }
 
+export interface UpdateGameRequest {
+  prompt: string;
+  config: GameConfig;
+  chatHistory?: ChatMessage[];
+}
+
 export type GenerationSource = "llm" | "fallback";
 
 export interface GenerateResponse {

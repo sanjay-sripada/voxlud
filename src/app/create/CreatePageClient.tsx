@@ -56,6 +56,9 @@ export default function CreatePageClient({ userName, examples }: CreatePageClien
   const router = useRouter();
   const searchParams = useSearchParams();
   const autoSent = useRef(false);
+  const editLoaded = useRef(false);
+  const [editingGameId, setEditingGameId] = useState<string | null>(null);
+  const [editingGameTitle, setEditingGameTitle] = useState<string | null>(null);
   const [modelsReady, setModelsReady] = useState(false);
   const [sessionReady, setSessionReady] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -150,9 +153,53 @@ export default function CreatePageClient({ userName, examples }: CreatePageClien
   }, []);
 
   useEffect(() => {
-    if (!modelsReady) return;
+    if (!modelsReady || searchParams.get("edit")) return;
     initSession().catch(() => setError("Could not start chat session"));
-  }, [modelsReady, initSession]);
+  }, [modelsReady, initSession, searchParams]);
+
+  useEffect(() => {
+    const editId = searchParams.get("edit");
+    if (!editId || editLoaded.current || !modelsReady) return;
+
+    editLoaded.current = true;
+    setError("");
+
+    fetch(`/api/games/${encodeURIComponent(editId)}/edit`)
+      .then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to load game");
+        return data.game as {
+          id: string;
+          prompt: string;
+          config: GameConfig;
+          chatHistory?: ChatMessage[];
+        };
+      })
+      .then((game) => {
+        localStorage.removeItem(SESSION_STORAGE_KEY);
+        setEditingGameId(game.id);
+        setEditingGameTitle(game.config.title);
+        setPreviewConfig(game.config);
+        setMessages(
+          game.chatHistory && game.chatHistory.length > 0
+            ? game.chatHistory
+            : [
+                {
+                  id: "seed-user",
+                  role: "user",
+                  content: game.prompt,
+                  createdAt: new Date().toISOString(),
+                },
+              ]
+        );
+        setSessionId(null);
+        setSessionReady(true);
+        router.replace(`/create?edit=${game.id}`, { scroll: false });
+      })
+      .catch((err) => {
+        setError(err instanceof Error ? err.message : "Failed to load game for editing");
+      });
+  }, [modelsReady, searchParams, router]);
 
   const handleProviderChange = (providerId: string) => {
     const entry = providers.find((p) => p.id === providerId);
@@ -184,7 +231,16 @@ export default function CreatePageClient({ userName, examples }: CreatePageClien
     try {
       let activeSessionId = sessionId;
       if (!activeSessionId) {
-        activeSessionId = await initSession();
+        if (editingGameId) {
+          const res = await fetch("/api/sessions", { method: "POST" });
+          if (!res.ok) throw new Error("Failed to start chat session");
+          const data = await res.json();
+          activeSessionId = data.session.id as string;
+          setSessionId(activeSessionId);
+          localStorage.setItem(SESSION_STORAGE_KEY, activeSessionId);
+        } else {
+          activeSessionId = await initSession();
+        }
       }
 
       const res = await fetch("/api/generate", {
@@ -245,25 +301,34 @@ export default function CreatePageClient({ userName, examples }: CreatePageClien
     setError("");
 
     try {
-      const res = await fetch("/api/games", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          prompt: promptSummary,
-          config: previewConfig,
-          sessionId,
-          chatHistory: messages,
-        }),
-      });
+      const payload = {
+        prompt: promptSummary,
+        config: previewConfig,
+        chatHistory: messages,
+        ...(sessionId && !editingGameId ? { sessionId } : {}),
+      };
+
+      const res = await fetch(
+        editingGameId ? `/api/games/${editingGameId}` : "/api/games",
+        {
+          method: editingGameId ? "PATCH" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Failed to publish game");
+        throw new Error(
+          data.error || (editingGameId ? "Failed to save changes" : "Failed to publish game")
+        );
       }
 
       const data = await res.json();
       localStorage.removeItem(SESSION_STORAGE_KEY);
-      router.push(`/play/${data.game.id}?new=true`);
+      router.push(
+        editingGameId ? `/play/${data.game.id}?updated=true` : `/play/${data.game.id}?new=true`
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to publish game");
     } finally {
@@ -283,6 +348,10 @@ export default function CreatePageClient({ userName, examples }: CreatePageClien
   };
 
   const handleNewChat = async () => {
+    if (editingGameId) {
+      router.push("/create");
+      return;
+    }
     localStorage.removeItem(SESSION_STORAGE_KEY);
     setMessages([]);
     setPreviewConfig(null);
@@ -304,11 +373,20 @@ export default function CreatePageClient({ userName, examples }: CreatePageClien
       <div className="relative mb-8 flex flex-col gap-4 lg:mb-10 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p className="mb-2 text-sm font-medium uppercase tracking-wider text-indigo-400">
-            Create
+            {editingGameId ? "Edit" : "Create"}
           </p>
-          <h1 className="mb-2 text-3xl font-bold lg:text-4xl">Make a game</h1>
+          <h1 className="mb-1 text-3xl font-bold lg:text-4xl">
+            {editingGameId ? `Edit ${editingGameTitle ?? "game"}` : "Make a game"}
+          </h1>
+          {!editingGameId && (
+            <span className="mb-2 inline-block text-[10px] font-semibold uppercase tracking-widest text-amber-400/90">
+              Beta
+            </span>
+          )}
           <p className="text-zinc-400">
-            Chat to design your game with AI, preview live on the right, then publish when ready.
+            {editingGameId
+              ? "Chat to refine your published game, preview changes live, then save when ready."
+              : "Chat to design your game with AI, preview live on the right, then publish when ready."}
             {llmConfigured ? " Games are configured by the LLM you pick below." : " Add an API key in .env to enable AI game design."}
           </p>
           <p className="mt-1 text-sm text-indigo-400">Signed in as {userName}</p>
@@ -371,6 +449,7 @@ export default function CreatePageClient({ userName, examples }: CreatePageClien
               if (lastUser) void sendMessage(lastUser.content);
             }}
             onSave={handlePublish}
+            publishLabel={editingGameId ? "Save changes" : "Publish & play"}
           />
         </div>
       </div>
