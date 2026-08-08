@@ -4,6 +4,10 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import GameCanvas from "@/components/GameCanvas";
+import OnlineRoomPanel from "@/components/OnlineRoomPanel";
+import { useAuth } from "@/components/AuthProvider";
+import { useOnlineGameRoom } from "@/hooks/useOnlineGameRoom";
+import { createOnlineGameSessionRef } from "@/types/online-game";
 import type { Game } from "@/types/game";
 
 const CONTROLS: Record<string, string[]> = {
@@ -11,6 +15,12 @@ const CONTROLS: Record<string, string[]> = {
     "W/S or ↑/↓ — Player 1",
     "Touch & drag left side — Player 1 (mobile)",
     "I/K — Player 2 (multiplayer)",
+    "First to 5 wins",
+  ],
+  pong_online: [
+    "Host: W/S — left paddle",
+    "Guest: I/K — right paddle",
+    "Share the invite link so a friend can join",
     "First to 5 wins",
   ],
   snake: [
@@ -116,6 +126,10 @@ export default function PlayPageClient() {
   const searchParams = useSearchParams();
   const id = params.id as string;
   const isNew = searchParams.get("new") === "true";
+  const isUpdated = searchParams.get("updated") === "true";
+  const roomId = searchParams.get("room");
+  const { user } = useAuth();
+  const onlineSessionRef = useRef(createOnlineGameSessionRef());
 
   const [game, setGame] = useState<Game | null>(null);
   const [loading, setLoading] = useState(true);
@@ -134,6 +148,26 @@ export default function PlayPageClient() {
     setGameOver(true);
   }, []);
 
+  const handleRemoteGameOver = useCallback((endedScore: number) => {
+    setFinalScore(endedScore);
+    setGameOver(true);
+    setStarted(true);
+  }, []);
+
+  const isOnlineMode = game?.config.mode === "online";
+  const supportsOnline = game?.config.type === "pong";
+
+  const { status, opponentConnected, error: roomError, createRoom, copyInviteLink } =
+    useOnlineGameRoom({
+      gameId: id,
+      roomId,
+      enabled: !!game && isOnlineMode && supportsOnline,
+      sessionRef: onlineSessionRef,
+      onRemoteGameOver: handleRemoteGameOver,
+    });
+
+  const canStartOnline = !isOnlineMode || !supportsOnline || (!!roomId && opponentConnected);
+
   const handleReplay = useCallback(() => {
     setGameOver(false);
     setScore(0);
@@ -142,6 +176,7 @@ export default function PlayPageClient() {
   }, []);
 
   const handleStart = useCallback(() => {
+    if (!canStartOnline) return;
     setStarted(true);
 
     if (!isMobile) return;
@@ -162,7 +197,7 @@ export default function PlayPageClient() {
         }
       });
     });
-  }, [isMobile]);
+  }, [isMobile, canStartOnline]);
 
   const handleExitFullscreen = useCallback(async () => {
     try {
@@ -268,8 +303,12 @@ export default function PlayPageClient() {
     );
   }
 
-  const controls = CONTROLS[game.config.type] || [];
+  const controls =
+    game.config.type === "pong" && game.config.mode === "online"
+      ? CONTROLS.pong_online
+      : CONTROLS[game.config.type] || [];
   const mobilePlaying = isMobile && started;
+  const isOwner = !!user && game.userId === user.id;
 
   return (
     <div
@@ -283,7 +322,12 @@ export default function PlayPageClient() {
       <div className={`flex flex-1 flex-col ${mobilePlaying ? "min-h-0 p-2" : ""}`}>
         {isNew && !mobilePlaying && (
           <div className="mb-3 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-2 text-sm text-emerald-300">
-            Your game is ready! Play it below, then share the link with friends.
+            Your game is published! Play it below, then share the link with friends.
+          </div>
+        )}
+        {isUpdated && !mobilePlaying && (
+          <div className="mb-3 rounded-xl border border-indigo-500/20 bg-indigo-500/10 px-4 py-2 text-sm text-indigo-300">
+            Your changes are saved. Play the updated version below.
           </div>
         )}
 
@@ -299,13 +343,15 @@ export default function PlayPageClient() {
             active={started}
             onScoreChange={setScore}
             onGameOver={handleGameOver}
+            onlineSessionRef={isOnlineMode && supportsOnline ? onlineSessionRef : undefined}
           />
 
           {!started && (
             <button
               type="button"
               onClick={handleStart}
-              className="absolute inset-0 z-10 flex cursor-pointer flex-col items-center justify-center gap-4 bg-[#0a0a12]/92 px-6 backdrop-blur-sm"
+              disabled={!canStartOnline}
+              className="absolute inset-0 z-10 flex cursor-pointer flex-col items-center justify-center gap-4 bg-[#0a0a12]/92 px-6 backdrop-blur-sm disabled:cursor-not-allowed"
             >
               <div className="text-center">
                 <p
@@ -317,8 +363,20 @@ export default function PlayPageClient() {
                 <h2 className="text-2xl font-bold sm:text-3xl">{game.config.title}</h2>
                 <p className="mt-2 max-w-xs text-sm text-zinc-400">{game.config.description}</p>
               </div>
-              <span className="rounded-xl bg-gradient-to-r from-indigo-500 to-pink-500 px-10 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25">
-                {isMobile ? "Tap to Play" : "Play"}
+              <span
+                className={`rounded-xl px-10 py-3 text-sm font-semibold text-white shadow-lg ${
+                  canStartOnline
+                    ? "bg-gradient-to-r from-indigo-500 to-pink-500 shadow-indigo-500/25"
+                    : "bg-white/10 text-zinc-400 shadow-none"
+                }`}
+              >
+                {isOnlineMode && supportsOnline && !roomId
+                  ? "Create a room to play"
+                  : isOnlineMode && supportsOnline && !opponentConnected
+                    ? "Waiting for opponent"
+                    : isMobile
+                      ? "Tap to Play"
+                      : "Play"}
               </span>
               {isMobile && (
                 <p className="text-xs text-zinc-500">Opens in fullscreen on mobile</p>
@@ -398,6 +456,18 @@ export default function PlayPageClient() {
             </span>
           </div>
 
+          {isOnlineMode && (
+            <OnlineRoomPanel
+              status={supportsOnline ? status : "unsupported"}
+              roomId={roomId}
+              opponentConnected={opponentConnected}
+              error={roomError}
+              supported={supportsOnline}
+              onCreateRoom={createRoom}
+              onCopyLink={copyInviteLink}
+            />
+          )}
+
           <div className="mb-4 rounded-lg bg-white/[0.03] p-3">
             <p className="mb-1 text-xs font-medium uppercase tracking-wider text-zinc-500">
               Original prompt
@@ -419,6 +489,14 @@ export default function PlayPageClient() {
             >
               {copied ? "Link copied!" : "Share game"}
             </button>
+            {isOwner && (
+              <Link
+                href={`/create?edit=${game.id}`}
+                className="block w-full rounded-xl border border-indigo-500/30 bg-indigo-500/10 py-2.5 text-center text-sm text-indigo-300 transition hover:border-indigo-500/50 hover:text-indigo-200"
+              >
+                Edit game
+              </Link>
+            )}
             <Link
               href="/create"
               className="block w-full rounded-xl border border-white/10 py-2.5 text-center text-sm text-zinc-300 transition hover:border-white/20 hover:text-white"

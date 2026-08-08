@@ -63,7 +63,7 @@ export default function MyGamesPageClient() {
             Your library
           </p>
           <h1 className="mb-2 text-4xl font-bold">My games</h1>
-          <p className="text-zinc-400">Games created by {displayName}</p>
+          <p className="text-zinc-400">Published games by {displayName}</p>
         </div>
         <Link
           href="/create"
@@ -81,7 +81,10 @@ export default function MyGamesPageClient() {
 
       {games.length === 0 ? (
         <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-12 text-center">
-          <p className="mb-4 text-zinc-400">You haven&apos;t created any games yet.</p>
+          <p className="mb-4 text-zinc-400">
+            You haven&apos;t published any games yet. Create a game and hit Publish when you&apos;re
+            ready.
+          </p>
           <Link
             href="/create"
             className="inline-flex rounded-full bg-gradient-to-r from-indigo-500 to-pink-500 px-6 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
@@ -94,12 +97,20 @@ export default function MyGamesPageClient() {
           {games.map((game) => (
             <div key={game.id} className="group relative">
               <GameCard game={game} />
-              <button
-                onClick={() => handleDelete(game.id)}
-                className="absolute top-3 right-3 rounded-lg bg-black/60 px-2 py-1 text-xs text-red-400 opacity-0 transition group-hover:opacity-100 hover:bg-black/80"
-              >
-                Delete
-              </button>
+              <div className="absolute top-3 right-3 flex gap-1 opacity-0 transition group-hover:opacity-100">
+                <Link
+                  href={`/create?edit=${game.id}`}
+                  className="rounded-lg bg-black/60 px-2 py-1 text-xs text-indigo-300 hover:bg-black/80"
+                >
+                  Edit
+                </Link>
+                <button
+                  onClick={() => handleDelete(game.id)}
+                  className="rounded-lg bg-black/60 px-2 py-1 text-xs text-red-400 hover:bg-black/80"
+                >
+                  Delete
+                </button>
+              </div>
             </div>
           ))}
         </div>

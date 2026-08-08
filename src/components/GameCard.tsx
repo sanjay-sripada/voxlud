@@ -1,31 +1,6 @@
 import Link from "next/link";
 import type { Game } from "@/types/game";
-
-const TYPE_LABELS: Record<string, string> = {
-  pong: "Pong",
-  snake: "Snake",
-  breakout: "Arcade",
-  runner: "Runner",
-  clicker: "Clicker",
-  flappy: "Flappy",
-  shooter: "Shooter",
-  tetris: "Tetris",
-  memory: "Memory",
-  whack: "Whack",
-  dodge: "Dodge",
-  slide: "2048",
-  catch: "Catch",
-  cross: "Cross",
-  stack: "Stack",
-  simon: "Simon",
-  reaction: "Reflex",
-};
-
-const MODE_LABELS: Record<string, string> = {
-  solo: "Solo",
-  "local-multiplayer": "Local MP",
-  online: "Online",
-};
+import { GAME_TYPE_EMOJI, MODE_LABELS, TYPE_LABELS } from "@/lib/game-labels";
 
 interface GameCardProps {
   game: Game;
@@ -46,23 +21,7 @@ export default function GameCard({ game }: GameCardProps) {
         }}
       >
         <div className="text-5xl opacity-80 transition group-hover:scale-110">
-          {config.type === "pong" && "🏓"}
-          {config.type === "snake" && "🐍"}
-          {config.type === "breakout" && "🧱"}
-          {config.type === "runner" && "🏃"}
-          {config.type === "clicker" && "☕"}
-          {config.type === "flappy" && "🐦"}
-          {config.type === "shooter" && "🚀"}
-          {config.type === "tetris" && "🧩"}
-          {config.type === "memory" && "🃏"}
-          {config.type === "whack" && "🔨"}
-          {config.type === "dodge" && "💨"}
-          {config.type === "slide" && "🔢"}
-          {config.type === "catch" && "🧺"}
-          {config.type === "cross" && "🐸"}
-          {config.type === "stack" && "🗼"}
-          {config.type === "simon" && "🎨"}
-          {config.type === "reaction" && "⚡"}
+          {GAME_TYPE_EMOJI[config.type] ?? "🎮"}
         </div>
       </div>
       <div className="p-4">

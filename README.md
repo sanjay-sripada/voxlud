@@ -98,6 +98,13 @@ Open [http://localhost:3000](http://localhost:3000).
 | `NEXT_PUBLIC_SUPABASE_URL` | Yes | Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Yes | Supabase anon/public key |
 | `NEXT_PUBLIC_SITE_URL` | Yes (prod) | Your app URL for OAuth redirects |
+| `LLM_PROVIDER` | No | `openai`, `groq`, `huggingface`, `ollama`, or `openrouter` |
+| `LLM_API_KEY` | No | Generic API key (or use provider-specific key below) |
+| `OPENAI_API_KEY` | No | OpenAI / OpenRouter key |
+| `GROQ_API_KEY` | No | Groq key (free tier available) |
+| `HUGGINGFACE_API_KEY` | No | Hugging Face token (free tier available) |
+| `LLM_MODEL` / `OPENAI_MODEL` | No | Model override (provider-specific default if unset) |
+| `LLM_BASE_URL` / `OPENAI_BASE_URL` | No | API base URL override |
 
 ## Project structure
 
@@ -115,6 +122,37 @@ src/
 supabase/
 └── migrations/           # SQL schema + seed data
 ```
+
+## Game generation
+
+With an LLM API key set, prompts are sent to a model that returns a structured `GameConfig` (game type, theme, difficulty settings). The response is validated before saving.
+
+If the key is missing or the LLM call fails, Voxlud falls back to the built-in rule-based parser in `src/lib/generator.ts` so generation always works.
+
+### Free LLM options
+
+**Groq** (recommended free cloud option):
+
+```bash
+LLM_PROVIDER=groq
+GROQ_API_KEY=gsk_...
+```
+
+**Hugging Face**:
+
+```bash
+LLM_PROVIDER=huggingface
+HUGGINGFACE_API_KEY=hf_...
+```
+
+**Ollama** (local, fully free):
+
+```bash
+ollama pull llama3.2
+LLM_PROVIDER=ollama
+```
+
+Groq, Hugging Face, and Ollama do not support OpenAI's `json_mode`, so Voxlud parses JSON from the model text and validates it. OpenAI uses `json_mode` when available.
 
 ## Auth flow
 

@@ -1,4 +1,4 @@
-import type { GameConfig } from "@/types/game";
+import type { ChatMessage, GameConfig } from "@/types/game";
 
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
@@ -36,6 +36,8 @@ export interface Database {
           plays: number;
           likes: number;
           featured: boolean;
+          published: boolean;
+          chat_history: ChatMessage[];
           created_at: string;
         };
         Insert: {
@@ -47,6 +49,8 @@ export interface Database {
           plays?: number;
           likes?: number;
           featured?: boolean;
+          published?: boolean;
+          chat_history?: ChatMessage[];
           created_at?: string;
         };
         Update: {
@@ -58,7 +62,36 @@ export interface Database {
           plays?: number;
           likes?: number;
           featured?: boolean;
+          published?: boolean;
+          chat_history?: ChatMessage[];
           created_at?: string;
+        };
+        Relationships: [];
+      };
+      creation_sessions: {
+        Row: {
+          id: string;
+          user_id: string;
+          messages: ChatMessage[];
+          current_config: GameConfig | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          user_id: string;
+          messages?: ChatMessage[];
+          current_config?: GameConfig | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          messages?: ChatMessage[];
+          current_config?: GameConfig | null;
+          created_at?: string;
+          updated_at?: string;
         };
         Relationships: [];
       };
