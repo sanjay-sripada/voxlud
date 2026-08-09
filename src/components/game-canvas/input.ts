@@ -43,6 +43,27 @@ export function createInputHandlers({ deps, game, getGameOver }: InputHandlerOpt
       return;
     }
 
+    if (deps.config.type === "minesweeper") {
+      game.handleMinesweeperTap?.(mx, my);
+      return;
+    }
+
+    if (deps.config.type === "target") {
+      game.handleTargetTap?.(mx, my);
+      return;
+    }
+
+    if (deps.config.type === "bubble") {
+      game.handleBubbleTap?.(mx, my);
+      return;
+    }
+
+    if (deps.config.type === "pinball") {
+      deps.touch.pointerX = mx;
+      deps.touch.actionTap = true;
+      return;
+    }
+
     if (deps.config.type !== "clicker") return;
 
     const s = deps.state as {
@@ -94,7 +115,10 @@ export function createInputHandlers({ deps, game, getGameOver }: InputHandlerOpt
       deps.config.type === "memory" ||
       deps.config.type === "whack" ||
       deps.config.type === "simon" ||
-      deps.config.type === "reaction"
+      deps.config.type === "reaction" ||
+      deps.config.type === "minesweeper" ||
+      deps.config.type === "target" ||
+      deps.config.type === "bubble"
     ) {
       handlePointerInput(touch.clientX, touch.clientY);
       e.preventDefault();
@@ -125,7 +149,12 @@ export function createInputHandlers({ deps, game, getGameOver }: InputHandlerOpt
       return;
     }
 
-    if (deps.config.type === "shooter" || deps.config.type === "dodge" || deps.config.type === "catch") {
+    if (
+      deps.config.type === "shooter" ||
+      deps.config.type === "dodge" ||
+      deps.config.type === "catch" ||
+      deps.config.type === "pinball"
+    ) {
       deps.touch.pointerX = x;
       deps.touch.actionTap = true;
       e.preventDefault();
@@ -157,7 +186,8 @@ export function createInputHandlers({ deps, game, getGameOver }: InputHandlerOpt
       deps.config.type === "breakout" ||
       deps.config.type === "shooter" ||
       deps.config.type === "dodge" ||
-      deps.config.type === "catch"
+      deps.config.type === "catch" ||
+      deps.config.type === "pinball"
     ) {
       deps.touch.pointerX = x;
       e.preventDefault();
@@ -211,7 +241,8 @@ export function createInputHandlers({ deps, game, getGameOver }: InputHandlerOpt
       deps.config.type === "breakout" ||
       deps.config.type === "shooter" ||
       deps.config.type === "dodge" ||
-      deps.config.type === "catch"
+      deps.config.type === "catch" ||
+      deps.config.type === "pinball"
     ) {
       deps.touch.pointerX = null;
     }

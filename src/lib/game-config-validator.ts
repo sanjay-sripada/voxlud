@@ -18,6 +18,10 @@ const GAME_TYPES: GameType[] = [
   "stack",
   "simon",
   "reaction",
+  "minesweeper",
+  "target",
+  "bubble",
+  "pinball",
 ];
 
 const GAME_MODES: GameMode[] = ["solo", "local-multiplayer", "online"];
@@ -140,6 +144,30 @@ function sanitizeSettings(type: GameType, settings: Record<string, unknown>): Re
         rounds: clampNumber(settings.rounds, 2, 10, 5),
         minDelay: clampNumber(settings.minDelay, 600, 2000, 800),
       };
+    case "minesweeper":
+      return {
+        gridSize: clampNumber(settings.gridSize, 7, 12, 9),
+        mines: clampNumber(settings.mines, 5, 30, 10),
+      };
+    case "target":
+      return {
+        duration: clampNumber(settings.duration, 15, 60, 30),
+        targetSpeed: clampNumber(settings.targetSpeed, 0.8, 3, 1.8),
+        maxMisses: clampNumber(settings.maxMisses, 3, 10, 5),
+      };
+    case "bubble":
+      return {
+        cols: clampNumber(settings.cols, 6, 10, 8),
+        rows: clampNumber(settings.rows, 8, 12, 10),
+        colors: clampNumber(settings.colors, 4, 6, 5),
+        pops: clampNumber(settings.pops, 15, 40, 25),
+      };
+    case "pinball":
+      return {
+        bumpers: clampNumber(settings.bumpers, 3, 8, 5),
+        lives: clampNumber(settings.lives, 1, 5, 3),
+        ballSpeed: clampNumber(settings.ballSpeed, 0.7, 1.5, 1),
+      };
     default:
       return {};
   }
@@ -223,5 +251,9 @@ Settings by type:
 - cross: lanes (4-10), carSpeed (0.8-2.5)
 - stack: blockSpeed (0.8-3), startWidth (60-140)
 - simon: speed (400-1000)
-- reaction: rounds (2-10), minDelay (600-2000)`;
+- reaction: rounds (2-10), minDelay (600-2000)
+- minesweeper: gridSize (7-12), mines (5-30)
+- target: duration (15-60), targetSpeed (0.8-3), maxMisses (3-10)
+- bubble: cols (6-10), rows (8-12), colors (4-6), pops (15-40)
+- pinball: bumpers (3-8), lives (1-5), ballSpeed (0.7-1.5)`;
 }

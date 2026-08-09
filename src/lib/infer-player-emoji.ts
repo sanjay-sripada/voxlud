@@ -69,6 +69,10 @@ const DEFAULT_EMOJI_BY_TYPE: Record<GameType, string> = {
   stack: "📦",
   simon: "🎨",
   reaction: "⚡",
+  minesweeper: "💣",
+  target: "🎯",
+  bubble: "🫧",
+  pinball: "🎱",
 };
 
 const EMOJI_IN_TEXT = /\p{Extended_Pictographic}/u;

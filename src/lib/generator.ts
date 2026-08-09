@@ -24,12 +24,16 @@ function detectGameType(prompt: string): GameType {
   if (/tetris|tetromino|falling.?block|stack/.test(p)) return "tetris";
   if (/memory|match.?pair|card.?game|concentration/.test(p)) return "memory";
   if (/flappy|bird|fly.?through|pipe/.test(p)) return "flappy";
+  if (/target|shooting.?gallery|aim|sniper|archery/.test(p)) return "target";
   if (/shoot|shooter|space|asteroid|invader|laser|galaxy/.test(p)) return "shooter";
   if (/snake|serpent|worm|connect.*color|color.*match/.test(p)) return "snake";
   if (/break|brick|breakout|smash/.test(p)) return "breakout";
   if (/click|tycoon|cafe|idle|tap|coin|upgrade/.test(p)) return "clicker";
   if (/simon|sequence|repeat|pattern|memory.?chain/.test(p)) return "simon";
   if (/reaction|reflex|quick.?tap|speed.?test/.test(p)) return "reaction";
+  if (/mine|minesweeper|sweep|bomb.?grid/.test(p)) return "minesweeper";
+  if (/bubble|pop.?color|match.?bubble|color.?pop/.test(p)) return "bubble";
+  if (/pinball|flipper|arcade.?ball/.test(p)) return "pinball";
   if (/stack.?tower|stacking|align.?block|tower.?stack/.test(p)) return "stack";
   if (/cross|frogger|crossy|road.?cross|traffic|highway/.test(p)) return "cross";
   if (/whack|mole|hammer|bash/.test(p)) return "whack";
@@ -72,6 +76,10 @@ function extractTitle(prompt: string, type: GameType): string {
     stack: "Tower Stack",
     simon: "Simon Says",
     reaction: "Reaction Test",
+    minesweeper: "Mine Sweeper",
+    target: "Target Attack",
+    bubble: "Bubble Pop",
+    pinball: "Pinball Arcade",
   };
   return typeNames[type];
 }
@@ -164,6 +172,26 @@ function buildSettings(prompt: string, type: GameType): Record<string, unknown> 
       settings.rounds = /long|marathon/.test(p) ? 8 : /quick|short/.test(p) ? 3 : 5;
       settings.minDelay = /hard/.test(p) ? 1200 : 800;
       break;
+    case "minesweeper":
+      settings.gridSize = /hard|big|large/.test(p) ? 11 : /easy|small/.test(p) ? 7 : 9;
+      settings.mines = /hard|many/.test(p) ? 18 : /easy|few/.test(p) ? 8 : 10;
+      break;
+    case "target":
+      settings.duration = /long|marathon/.test(p) ? 45 : /quick|short/.test(p) ? 20 : 30;
+      settings.targetSpeed = /fast|hard|intense/.test(p) ? 2.5 : /slow|easy/.test(p) ? 1 : 1.8;
+      settings.maxMisses = /hard|strict/.test(p) ? 3 : /easy/.test(p) ? 8 : 5;
+      break;
+    case "bubble":
+      settings.cols = /wide|big/.test(p) ? 9 : /narrow|small/.test(p) ? 7 : 8;
+      settings.rows = /tall|big/.test(p) ? 11 : 10;
+      settings.colors = /hard|many/.test(p) ? 6 : /easy|few/.test(p) ? 4 : 5;
+      settings.pops = /long|marathon/.test(p) ? 35 : /quick|short/.test(p) ? 18 : 25;
+      break;
+    case "pinball":
+      settings.bumpers = /many|chaos|hard/.test(p) ? 7 : /few|easy/.test(p) ? 4 : 5;
+      settings.lives = /hard|one life/.test(p) ? 2 : /easy/.test(p) ? 5 : 3;
+      settings.ballSpeed = /fast|hard/.test(p) ? 1.3 : /slow|easy/.test(p) ? 0.8 : 1;
+      break;
   }
 
   return settings;
@@ -193,6 +221,10 @@ function parsePrompt(prompt: string): ParsedPrompt {
     stack: "Drop blocks perfectly to build the tallest tower.",
     simon: "Watch the pattern and repeat the sequence.",
     reaction: "Wait for green, then tap as fast as you can!",
+    minesweeper: "Reveal all safe tiles without hitting a mine.",
+    target: "Tap moving targets before they escape the screen.",
+    bubble: "Pop groups of matching bubbles to clear the board.",
+    pinball: "Use flippers to keep the ball alive and hit bumpers.",
   };
 
   return {
@@ -254,5 +286,9 @@ export function getExamplePrompts(): string[] {
     "A stack tower game where you align falling blocks",
     "A simon says memory sequence game with colors",
     "A reaction time test — tap when the screen turns green",
+    "A minesweeper puzzle with a 9x9 grid and hidden mines",
+    "A target shooting gallery where you tap moving targets",
+    "A bubble pop game — match and pop colored bubbles",
+    "A pinball arcade game with flippers and bumpers",
   ];
 }
