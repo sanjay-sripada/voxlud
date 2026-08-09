@@ -15,7 +15,11 @@ export type GameType =
   | "cross"
   | "stack"
   | "simon"
-  | "reaction";
+  | "reaction"
+  | "minesweeper"
+  | "target"
+  | "bubble"
+  | "pinball";
 
 export type GameMode = "solo" | "local-multiplayer" | "online";
 

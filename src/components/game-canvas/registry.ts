@@ -17,6 +17,10 @@ import { createCrossGame } from "@/components/game-canvas/games/cross";
 import { createStackGame } from "@/components/game-canvas/games/stack";
 import { createSimonGame } from "@/components/game-canvas/games/simon";
 import { createReactionGame } from "@/components/game-canvas/games/reaction";
+import { createMinesweeperGame } from "@/components/game-canvas/games/minesweeper";
+import { createTargetGame } from "@/components/game-canvas/games/target";
+import { createBubbleGame } from "@/components/game-canvas/games/bubble";
+import { createPinballGame } from "@/components/game-canvas/games/pinball";
 
 const factories: Record<GameType, (deps: GameDeps) => GameModule> = {
   pong: createPongGame,
@@ -36,6 +40,10 @@ const factories: Record<GameType, (deps: GameDeps) => GameModule> = {
   stack: createStackGame,
   simon: createSimonGame,
   reaction: createReactionGame,
+  minesweeper: createMinesweeperGame,
+  target: createTargetGame,
+  bubble: createBubbleGame,
+  pinball: createPinballGame,
 };
 
 export function createGameModule(type: GameType, deps: GameDeps): GameModule {

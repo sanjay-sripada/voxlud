@@ -18,6 +18,10 @@ export const TYPE_LABELS: Record<GameType, string> = {
   stack: "Stack",
   simon: "Simon",
   reaction: "Reflex",
+  minesweeper: "Mines",
+  target: "Target",
+  bubble: "Bubble",
+  pinball: "Pinball",
 };
 
 export const MODE_LABELS: Record<GameMode, string> = {
@@ -50,4 +54,8 @@ export const GAME_TYPE_EMOJI: Record<GameType, string> = {
   stack: "🗼",
   simon: "🎨",
   reaction: "⚡",
+  minesweeper: "💣",
+  target: "🎯",
+  bubble: "🫧",
+  pinball: "🎱",
 };

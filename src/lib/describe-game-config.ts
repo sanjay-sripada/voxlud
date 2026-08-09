@@ -107,6 +107,30 @@ const GAME_EXPLANATIONS: Record<
     controls: "Tap when green appears",
     scoring: "Faster reaction = lower ms · averaged over rounds",
   },
+  minesweeper: {
+    youPlay: "A grid of hidden tiles",
+    goal: "Reveal all safe cells without hitting a mine",
+    controls: "Tap to reveal · toggle flag mode to mark mines",
+    scoring: "+5 per reveal · +500 bonus for clearing the board",
+  },
+  target: {
+    youPlay: "A shooting gallery",
+    goal: "Tap targets before they leave the screen",
+    controls: "Tap targets as they move",
+    scoring: "+10 per target · golden targets worth more",
+  },
+  bubble: {
+    youPlay: "A grid of colored bubbles",
+    goal: "Pop groups of 2+ matching bubbles to clear the board",
+    controls: "Tap matching bubble groups",
+    scoring: "Points scale with group size squared",
+  },
+  pinball: {
+    youPlay: "Flippers and a bouncing ball",
+    goal: "Keep the ball in play and hit bumpers for points",
+    controls: "A/D or tap left/right side for flippers",
+    scoring: "+25 per bumper hit · lose a life when the ball falls",
+  },
 };
 
 export function getDisplayEmoji(config: GameConfig): string {
@@ -131,7 +155,7 @@ export function describeGameConfig(config: GameConfig): string {
     info ? `Controls: ${info.controls}` : "",
     emoji ? `Player icon: ${emoji}` : "",
     "",
-    "This is one of 17 arcade templates (not a custom 3D game). Ask to change emoji, difficulty, theme, or style.",
+    "This is one of 21 arcade templates (not a custom 3D game). Ask to change emoji, difficulty, theme, or style.",
   ];
 
   return lines.filter(Boolean).join("\n");

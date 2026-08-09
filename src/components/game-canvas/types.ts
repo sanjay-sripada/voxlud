@@ -39,5 +39,8 @@ export interface GameModule {
   handleWhackTap?: (mx: number, my: number) => void;
   handleSimonTap?: (mx: number, my: number) => void;
   handleReactionTap?: () => void;
+  handleMinesweeperTap?: (mx: number, my: number, flag?: boolean) => void;
+  handleTargetTap?: (mx: number, my: number) => void;
+  handleBubbleTap?: (mx: number, my: number) => void;
   handlePointerInput?: (clientX: number, clientY: number) => void;
 }

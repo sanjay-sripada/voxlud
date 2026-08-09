@@ -81,16 +81,17 @@ export default function ExplorePageClient({ games }: ExplorePageClientProps) {
     filters.mode !== "all" ||
     filters.sort !== "newest";
 
-  const updateFilters = useCallback(
-    (patch: Partial<ExploreFilters>) => {
-      setFilters((current) => {
-        const next = { ...current, ...patch };
-        router.replace(buildExploreUrl(next), { scroll: false });
-        return next;
-      });
-    },
-    [router]
-  );
+  const updateFilters = useCallback((patch: Partial<ExploreFilters>) => {
+    setFilters((current) => ({ ...current, ...patch }));
+  }, []);
+
+  useEffect(() => {
+    const nextUrl = buildExploreUrl(filters);
+    const currentUrl = buildExploreUrl(filtersFromParams(searchParams));
+    if (nextUrl !== currentUrl) {
+      router.replace(nextUrl, { scroll: false });
+    }
+  }, [filters, router, searchParams]);
 
   const clearFilters = () => {
     router.replace("/explore", { scroll: false });
