@@ -3,7 +3,7 @@
 - **Date:** 2026-08-09
 - **Brief:** [docs/briefs/2026-08-09-timepass-games.md](./briefs/2026-08-09-timepass-games.md)
 - **Plan:** [docs/plans/2026-08-09-timepass-games.md](./plans/2026-08-09-timepass-games.md)
-- **PR:** (see below after push)
+- **PR:** https://github.com/sanjay-sripada/voxlud/pull/2
 
 ## Shipped
 
